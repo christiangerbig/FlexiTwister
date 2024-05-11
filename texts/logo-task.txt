@@ -1,0 +1,10 @@
+Let's start with the logo. It's someting special. One of the bars and the logo share the same palette. So we got a restriction here.
+
+The palette of the logo should have a colour gradient from a dark colour to a bright colour that range from color00 - color15.
+Thus we also have a colour gradient for one bar. It doesn't have to be blue, but it can be. Whatever your colour gradient looks like I will adapt the other bars colour gradients.
+
+The logo should have the dimensions 256x54 pixel in 16 colours.
+Colour 00 and colour 08 are always transparent and cant be used.
+
+You can only use the lower 8 colours (colour 01-07) OR the upper 8 colours (colour 09-15) for the logo.
+A a consequence the logo will be dark with the lower 8 colours or bright with upper 8 colours.
