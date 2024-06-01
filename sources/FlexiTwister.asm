@@ -344,6 +344,12 @@ hst_text_y_position            EQU (pf1_y_size3-hst_text_character_y_size)/2
 hst_colorrun_height            EQU hst_text_character_y_size
 hst_colorrun_y_pos             EQU (ssb_bar_height-hst_text_character_y_size)/2
 
+hst_copy_blit_x_size           EQU hst_text_character_x_size
+hst_copy_blit_y_size           EQU hst_text_character_y_size*hst_text_character_depth
+
+hst_horiz_scroll_blit_x_size   EQU hst_horiz_scroll_window_x_size
+hst_horiz_scroll_blit_y_size   EQU hst_horiz_scroll_window_y_size*hst_horiz_scroll_window_depth
+
 ; **** Bar-Fader ****
 bf_colors_number               EQU ssb_bar_height
 
@@ -1108,7 +1114,7 @@ tb_init_color_table_loop
 ; ** Farbtabelle initialisieren **
 ; --------------------------------
 hst_init_color_table
-  lea     hst_colorgradient(pc),a0
+  lea     hst_color_gradient(pc),a0
   lea     pf1_color_table+(1+(((color_values_number1*segments_number1)+hst_colorrun_y_pos)*2))*LONGWORDSIZE(pc),a1
   moveq   #color_values_number3-1,d7
 hst_init_color_table_loop
@@ -1742,8 +1748,8 @@ horiz_scrolltext
   tst.w   hst_state(a3)      ;Laufschrift an ?
   bne.s   no_horiz_scrolltext ;Nein -> verweige
   movem.l a4-a5,-(a7)
-  bsr.s   hst_init_character_blit
-  move.w  #(hst_text_character_y_size*hst_text_character_depth*64)+(hst_text_character_x_size/16),d4 ;BLTSIZE
+  bsr.s   hst_init_copy_blit
+  move.w  #(hst_copy_blit_y_size*64)+(hst_copy_blit_x_size/16),d4 ;BLTSIZE
   move.w  #hst_text_character_x_restart,d5
   lea     hst_characters_x_positions(pc),a0 ;X-Positionen der Chars
   lea     hst_characters_image_pointers(pc),a1 ;Zeiger auf Adressen der Chars-Images
@@ -1780,11 +1786,8 @@ hst_no_new_character_image
   move.w  #DMAF_BLITHOG,DMACON-DMACONR(a6) ;BLTPRI aus
 no_horiz_scrolltext
   rts
-
-; ** konstante Blitterregister initialisieren **
-; ----------------------------------------------
   CNOP 0,4
-hst_init_character_blit
+hst_init_copy_blit
   move.w  #DMAF_BLITHOG+DMAF_SETCLR,DMACON-DMACONR(a6) ;BLTPRI an
   WAITBLITTER
   move.l  #(BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC)<<16,BLTCON0-DMACONR(a6) ;Minterm D=A
@@ -1850,7 +1853,7 @@ hst_horiz_scroll
   addq.w  #2,a0              ;16 Pixel überspringen
   move.l  a0,BLTDPT-DMACONR(a6) ;Ziel
   move.l  #((pf1_plane_width-hst_horiz_scroll_window_width)<<16)+(pf1_plane_width-hst_horiz_scroll_window_width),BLTAMOD-DMACONR(a6) ;A-Mod + D-Mod
-  move.w  #(hst_horiz_scroll_window_y_size*hst_horiz_scroll_window_depth*64)+(hst_horiz_scroll_window_x_size/16),BLTSIZE-DMACONR(a6) ;Blitter starten
+  move.w  #(hst_horiz_scroll_blit_y_size*64)+(hst_horiz_scroll_blit_x_size/16),BLTSIZE-DMACONR(a6) ;Blitter starten
 hst_no_horiz_scroll
   rts
 
@@ -2302,7 +2305,7 @@ VERTB_int_server
 ; ** PT-replay routine **
 ; -----------------------
   IFD pt_v2.3a
-    PT2_REPLAY
+    PT2_REPLAY pt_trigger_fx
   ENDC
   IFD pt_v3.0b
     PT3_REPLAY pt_trigger_fx
@@ -2460,7 +2463,7 @@ sine_table
 ; -------------------------
   INCLUDE "music-tracker/pt-sample-starts-table.i"
 
-; ** Pionters to priod tables for different tuning **
+; ** Pointers to priod tables for different tuning **
 ; ---------------------------------------------------
   INCLUDE "music-tracker/pt-finetune-starts-table.i"
 
@@ -2511,7 +2514,7 @@ sp_color_offsets_table
 
 ; **** Horiz-Scrolltext ****
   CNOP 0,4
-hst_colorgradient
+hst_color_gradient
   INCLUDE "Daten:Asm-Sources.AGA/FlexiTwister/colortables/Font-Colorgradient.ct"
 
 ; ** ASCII-Buchstaben **
