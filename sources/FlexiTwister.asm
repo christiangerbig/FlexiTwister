@@ -1809,7 +1809,7 @@ hst_get_text_softscroll
 
 ; ** Neues Image für Character ermitteln **
 ; -----------------------------------------
-  GET_NEW_CHARACTER_IMAGE hst,hst_check_control_codes,NORESTART
+  GET_NEW_CHARACTER_IMAGE.W hst,hst_check_control_codes,NORESTART
 
   CNOP 0,4
 hst_check_control_codes
