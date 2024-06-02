@@ -1,8 +1,8 @@
 ; ##############################
 ; # Programm: FlexiTwister.asm #
 ; # Autor:    Christian Gerbig #
-; # Datum:    23.04.2024       #
-; # Version:  1.3 Beta         #
+; # Datum:    02.06.2024       #
+; # Version:  1.4 Beta         #
 ; # CPU:      68020+           #
 ; # FASTMEM:  -                #
 ; # Chipset:  AGA              #
@@ -35,6 +35,7 @@
 ; - Logo-Scroller optimiert
 ; - Fader optimiert
 ; - Init Copperlisten überarbeitet
+; - Mit überarbeiteten Include-Files
 
 
 ; PT 8xy-Befehl
@@ -351,6 +352,7 @@ hst_horiz_scroll_blit_x_size   EQU hst_horiz_scroll_window_x_size
 hst_horiz_scroll_blit_y_size   EQU hst_horiz_scroll_window_y_size*hst_horiz_scroll_window_depth
 
 ; **** Bar-Fader ****
+bf_color_table_offset          EQU 0
 bf_colors_number               EQU ssb_bar_height
 
 ; **** Bar-Fader-In ****
@@ -1885,8 +1887,8 @@ bfi_no_restart_fader_angle
   MULUF.L bfi_fader_radius*2,d0,d1 ;y'=(yr*sin(w))/2^15
   swap    d0
   ADDF.W  bfi_fader_center,d0 ;+ Fader-Mittelpunkt
-  lea     bf_color_cache(pc),a0 ;Puffer für Farbwerte
-  lea     bfi_color_table(pc),a1 ;Sollwerte
+  lea     bf_color_cache+(bf_color_table_offset*LONGWORDSIZE)(pc),a0 ;Puffer für Farbwerte
+  lea     bfi_color_table+(bf_color_table_offset*LONGWORDSIZE)(pc),a1 ;Sollwerte
   move.w  d0,a5              ;Additions-/Subtraktionswert für Blau
   swap    d0                 ;WORDSHIFT
   clr.w   d0                 ;Bits 0-15 löschen
@@ -1924,8 +1926,8 @@ bfo_no_restart_fader_angle
   MULUF.L bfo_fader_radius*2,d0,d1 ;y'=(yr*sin(w))/2^15
   swap    d0
   ADDF.W  bfo_fader_center,d0 ;+ Fader-Mittelpunkt
-  lea     bf_color_cache(pc),a0 ;Puffer für Farbwerte
-  lea     bfo_color_table(pc),a1 ;Sollwerte
+  lea     bf_color_cache+(bf_color_table_offset*LONGWORDSIZE)(pc),a0 ;Puffer für Farbwerte
+  lea     bfo_color_table+(bf_color_table_offset*LONGWORDSIZE)(pc),a1 ;Sollwerte
   move.w  d0,a5              ;Additions-/Subtraktionswert für Blau
   swap    d0                 ;WORDSHIFT
   clr.w   d0                 ;Bits 0-15 löschen
@@ -1953,8 +1955,8 @@ bf_convert_color_table
 bf_convert_color_table2
   move.l  a4,-(a7)
   move.w  #$0f0f,d5          ;Maske für RGB-Nibbles
-  lea     bf_color_cache(pc),a0 ;Quelle: Puffer für helle Farbwerte
-  lea     (bf_colors_number/2)*LONGWORDSIZE(a0),a1 ;Puffer für dunkle Farbwerte
+  lea     bf_color_cache+(bf_color_table_offset*LONGWORDSIZE)(pc),a0 ;Quelle: Puffer für helle Farbwerte
+  lea     (bf_color_table_offset*LONGWORDSIZE)+((bf_colors_number/2)*LONGWORDSIZE)(a0),a1 ;Puffer für dunkle Farbwerte
   move.l  extra_memory(a3),a2
   add.l   #em_color_table,a2 ;Zeiger auf Farbtabelle
   lea     bf_colors_number*LONGWORDSIZE*2(a2),a4 ;Ziel: Ende der Bar-Farbtabelle
@@ -2655,7 +2657,7 @@ hst_stop_text
 
 ; ** Programmversion für Version-Befehl **
 ; ----------------------------------------
-prg_version DC.B "$VER: RSE-FlexiTwister 1.3 beta (23.4.24)",TRUE
+prg_version DC.B "$VER: RSE-FlexiTwister 1.4 beta (2.6.24)",TRUE
   EVEN
 
 
