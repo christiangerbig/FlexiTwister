@@ -1347,7 +1347,7 @@ proceed_horiz_scroll_logo_start
   add.w   #hsl_start_x_center*4*2,d0  ;+ X-Mittelpunkt
   move.w  d0,hsl_variable_x_radius(a3) ;X-Radius retten
   addq.w  #hsl_start_x_angle_speed,d2 ;nächster X-Winkel
-  move.w  d2,hsl_start_x_angle(a3);retten ;retten
+  move.w  d2,hsl_start_x_angle(a3) 
 no_horiz_scroll_logo_start
   rts
 
@@ -1371,7 +1371,7 @@ proceed_horiz_scroll_logo_stop
   add.w   #hsl_stop_x_center*4*2,d0 ;+ X-Mittelpunkt
   move.w  d0,hsl_variable_x_radius(a3) ;X-Radius retten
   subq.w  #hsl_stop_x_angle_speed,d2 ;nächster X-Winkel
-  move.w  d2,hsl_stop_x_angle(a3);retten ;retten
+  move.w  d2,hsl_stop_x_angle(a3) 
 no_horiz_scroll_logo_stop
   rts
 
@@ -1388,7 +1388,7 @@ horiz_scroll_logo
   swap    d3
   add.w   #hsl_x_center*4,d3 ;+ X-Position
   addq.b  #hsl_x_angle_speed,d1 ;nächster X-Winkel
-  move.w  d1,hsl_x_angle(a3)  ;retten
+  move.w  d1,hsl_x_angle(a3)  
   moveq   #lg_image_y_position,d4 ;Y-Position
   MOVEF.W lg_image_y_size,d5 ;Höhe
   add.w   d4,d5              ;Höhe dazuaddieren
@@ -1482,13 +1482,13 @@ tb_get_yz_coordinates
   MULUF.W vm_audchaninfo_SIZE/2,d1,d0
   moveq   #tb_y_distance,d3
   move.w  tb_y_angle(a3),d4 ;1. Y-Winkel
-  move.w  d4,d0              ;retten
+  move.w  d4,d0              
   move.w  tb_y_angle_step_angle(a3),d5 ;1. Y-Step-Winkel
   add.b   (vm_audio_channel1_info+vm_aci_yanglespeed+1,pc,d1.w*2),d0 ;Y-Winkel erhöhen
-  move.w  d0,tb_y_angle(a3) ;retten
+  move.w  d0,tb_y_angle(a3) 
   move.w  d5,d0
   add.b   (vm_audio_channel1_info+vm_aci_yanglestep+1,pc,d1.w*2),d0
-  move.w  d0,tb_y_angle_step_angle(a3) ;retten
+  move.w  d0,tb_y_angle_step_angle(a3) 
   lea     sine_table(pc),a0    
   lea     tb_yz_coordinates(pc),a1 ;Zeiger auf Y+Z-Koords-Tabelle
   move.w  #tb_y_centre,a2
@@ -1529,7 +1529,7 @@ sp_get_stripes_y_coordinates
   MOVEF.W (sine_table_length/2)-1,d5 ;Überlauf
   add.w   sp_variable_stripes_y_angle_speed(a3),d0 ;nächster Y-Winkel
   and.w   d5,d0              ;Überlauf entfernen
-  move.w  d0,sp_stripes_y_angle(a3) ;retten
+  move.w  d0,sp_stripes_y_angle(a3) 
   ;moveq   #sp_stripes_y_radius*2,d3
   moveq   #sp_stripes_y_center,d4
   lea     sine_table+((sine_table_length/4)*LONGWORDSIZE)(pc),a0 
@@ -1540,7 +1540,7 @@ sp_get_stripes_y_coordinates_loop
   MULUF.L SP_stripes_y_radius*2,d0,d1 ;y'=(yr*cos(w))/2^15
   swap    d0
   add.w   d4,d0              ;y' + Y-Mittelpunkt
-  move.w  d0,(a1)+           ;retten
+  move.w  d0,(a1)+           
   addq.w  #sp_stripes_y_angle_step,d2 ;nächster Y-Winkel
   and.w   d5,d2              ;Überlauf entfernen
   dbf     d7,sp_get_stripes_y_coordinates_loop
@@ -1553,7 +1553,7 @@ tb_set_background_bars
   movem.l a4-a6,-(a7)
   moveq   #tb_bar_height,d4
   lea     tb_yz_coordinates(pc),a0 ;Zeiger auf YZ-Koords
-  move.l  cl2_construction2(a3),a2 ;CL
+  move.l  cl2_construction2(a3),a2 
   ADDF.W  cl2_extension1_entry+cl2_ext1_BPLCON4_1+2,a2
   move.l  extra_memory(a3),a5 ;Zeiger auf Tabelle mit Switchwerten
   lea     tb_fader_columns_mask(pc),a6
@@ -1590,7 +1590,7 @@ tb_skip_background_bar
   CNOP 0,4
 make_striped_bar
   move.w  ssb_y_angle(a3),d1 ;Y-Winkel holen
-  move.w  d1,d0              ;retten
+  move.w  d1,d0              
   addq.w  #ssb_y_angle_speed,d0 ;nächster Y-Winkel
   and.w   #(sine_table_length/2)-1,d0 ;Überlauf entfernen
   move.w  d0,ssb_y_angle(a3) ;Y-Winkel retten
@@ -1598,15 +1598,15 @@ make_striped_bar
   move.l  (a0,d1.w*4),d0     ;sin(w)
   MULUF.L ssb_y_radius*2,d0,d1 ;y'=(yr*sin(w))/2^15
   swap    d0
-  move.w  d0,d1              ;retten
+  move.w  d0,d1              
   add.w   #ssb_y_radius,d0   ;y' + Y-Radius
-  move.w  d0,hst_text_y_offset(a3) ;retten
+  move.w  d0,hst_text_y_offset(a3) 
   add.w   #ssb_y_center,d1   ;y' + Y-Mittelpunkt
   MULUF.W cl2_extension1_SIZE/4,d1,d0 ;Y*cl2_extension1_SIZE
   move.l  extra_memory(a3),a0
   add.l   #em_switch_table2,a0 ;Zeiger auf Tabelle mit Switchwerten
-  move.l  cl2_construction2(a3),a1 ;CL
-  ADDF.W  (cl2_extension1_entry+cl2_ext1_BPLCON4_1+2),a1 ;CL
+  move.l  cl2_construction2(a3),a1 
+  ADDF.W  (cl2_extension1_entry+cl2_ext1_BPLCON4_1+2),a1 
   lea     (a1,d1.w*4),a1     ;Y-Offset in CL
   move.w  #cl2_extension1_SIZE,a2
   moveq   #(ssb_bar_height)-1,d7 ;Höhe der Bar
@@ -1667,7 +1667,7 @@ tb_set_foreground_bars
   movem.l a4-a6,-(a7)
   moveq   #tb_bar_height,d4
   lea     tb_yz_coordinates(pc),a0 ;Zeiger auf YZ-Koords
-  move.l  cl2_construction2(a3),a2 ;CL
+  move.l  cl2_construction2(a3),a2 
   ADDF.W  cl2_extension1_entry+cl2_ext1_BPLCON4_1+2,a2
   move.l  extra_memory(a3),a5 ;Zeiger auf Tabelle mit Switchwerten
   lea     tb_fader_columns_mask(pc),a6
@@ -1728,7 +1728,7 @@ sp_make_pattern
   move.l  extra_memory(a3),a1
   add.l   #em_color_table,a1 ;Zeiger auf Farbtabelle
   move.l  cl1_construction2(a3),a2
-  ADDF.W  cl1_COLOR00_high4+2,a2 ;CL
+  ADDF.W  cl1_COLOR00_high4+2,a2 
   moveq   #ssb_bar_height-1,d7 ;Anzahl der Zeilen
 sp_make_stripe_bar_loop
   move.w  (a0)+,d0           ;Farboffset holen
@@ -1806,7 +1806,7 @@ hst_get_text_softscroll
   and.w   (a0),d0            ;X-Pos.&$f
   ror.w   #4,d0              ;Bits in richtige Position bringen
   or.w    #BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC,d0 ;Minterm  D=A
-  move.w  d0,hst_text_BLTCON0BITS(a3) ;retten
+  move.w  d0,hst_text_BLTCON0BITS(a3) 
   rts
 
 ; ** Neues Image für Character ermitteln **
@@ -1963,14 +1963,14 @@ bf_convert_color_table2
   MOVEF.W (bf_colors_number/2)-1,d7 ;Anzahl der Farben
 bf_convert_color_table_loop
   move.l  (a0)+,d0           ;RGB8-Farbwert
-  move.l  d0,d2              ;retten
+  move.l  d0,d2              
   RGB8_TO_RGB4HI d0,d1,d5
   move.w  d0,(a2)+           ;COLORxx High-Bits
   RGB8_TO_RGB4LO d2,d1,d5
   move.w  d2,(a2)+           ;Low-Bits COLORxx
 
   move.l  (a1)+,d3           ;RGB8-Farbwert
-  move.l  d3,d4              ;retten
+  move.l  d3,d4              
   RGB8_TO_RGB4HI d3,d1,d5
   move.w  d3,(a2)+           ;COLORxx High-Bits
   RGB8_TO_RGB4LO d4,d1,d5
@@ -2008,7 +2008,7 @@ scroll_logo_bottom_in
   MOVEF.W lg_image_y_position,d5
   add.w   d0,d5              ;Y-Zentrierung
   addq.w  #slbi_y_angle_speed,d2 ;nächster Y-Winkel
-  move.w  d2,slbi_y_angle(a3);retten
+  move.w  d2,slbi_y_angle(a3)
   bsr.s   slb_scroll_logo
   move.l  (a7)+,a4
 no_scroll_logo_bottom_in
@@ -2037,7 +2037,7 @@ scroll_logo_bottom_out
   MOVEF.W lg_image_y_position,d5
   add.w   d0,d5              ;Y-Zentrierung
   addq.w  #slbi_y_angle_speed,d2 ;nächster Y-Winkel
-  move.w  d2,slbo_y_angle(a3);retten
+  move.w  d2,slbo_y_angle(a3)
   bsr.s   slb_scroll_logo
   move.l  (a7)+,a4
 no_scroll_logo_bottom_out
