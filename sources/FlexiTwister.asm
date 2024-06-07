@@ -1877,9 +1877,9 @@ bar_fader_in
   move.w  d2,d0
   ADDF.W  bfi_fader_angle_speed,d0 ;nächster Fader-Winkel
   cmp.w   #sine_table_length/2,d0 ;Y-Winkel <= 180 Grad ?
-  ble.s   bfi_no_restart_fader_angle ;Ja -> verzweige
+  ble.s   bfi_save_fader_angle ;Ja -> verzweige
   MOVEF.W sine_table_length/2,d0 ;180 Grad
-bfi_no_restart_fader_angle
+bfi_save_fader_angle
   move.w  d0,bfi_fader_angle(a3) ;Fader-Winkel retten
   MOVEF.W bf_colors_number*3,d6 ;Zähler
   lea     sine_table(pc),a0  ;Sinus-Tabelle
@@ -1916,9 +1916,9 @@ bar_fader_out
   move.w  d2,d0
   ADDF.W  bfo_fader_angle_speed,d0 ;nächster Fader-Winkel
   cmp.w   #sine_table_length/2,d0 ;Y-Winkel <= 180 Grad ?
-  ble.s   bfo_no_restart_fader_angle ;Ja -> verzweige
+  ble.s   bfo_save_fader_angle ;Ja -> verzweige
   MOVEF.W sine_table_length/2,d0 ;180 Grad
-bfo_no_restart_fader_angle
+bfo_save_fader_angle
   move.w  d0,bfo_fader_angle(a3) ;Fader-Winkel retten
   MOVEF.W bf_colors_number*3,d6 ;Zähler
   lea     sine_table(pc),a0  ;Sinus-Tabelle
