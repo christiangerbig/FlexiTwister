@@ -1815,7 +1815,7 @@ hst_get_text_softscroll
 
   CNOP 0,4
 hst_check_control_codes
-  cmp.b   #"",d0
+  cmp.b   #ASCII_CTRL_S,d0
   beq.s   hst_stop_scrolltext
   rts
   CNOP 0,4
@@ -2651,7 +2651,7 @@ hst_stop_text
   REPT ((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1
     DC.B " "
   ENDR
-  DC.B " "
+  DC.B ASCII_CTRL_S," "
   EVEN
 
 
