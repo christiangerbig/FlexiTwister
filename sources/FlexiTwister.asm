@@ -1332,7 +1332,7 @@ swap_playfield1_loop
 horiz_scroll_logo_start
   tst.w   hsl_start_state(a3) ;Berechnung an ?
   bne.s   no_horiz_scroll_logo_start  ;Nein -> verzweige
-  move.w  hsl_start_x_angle(a3),d2 ;X-Winkel holen
+  move.w  hsl_start_x_angle(a3),d2 ;X-Winkel
   cmp.w   #sine_table_length/2,d2 ;180 Grad erreicht ?
   ble.s   proceed_horiz_scroll_logo_start ;Nein -> verzweige
   moveq   #FALSE,d0
@@ -1355,7 +1355,7 @@ no_horiz_scroll_logo_start
 horiz_scroll_logo_stop
   tst.w   hsl_stop_state(a3) ;Berechnung an ?
   bne.s   no_horiz_scroll_logo_stop ;Nein -> verzweige
-  move.w  hsl_stop_x_angle(a3),d2 ;X-Winkel holen
+  move.w  hsl_stop_x_angle(a3),d2 ;X-Winkel
   cmp.w   #sine_table_length/4,d2 ;90 Grad erreicht ?
   bgt.s   proceed_horiz_scroll_logo_stop ;Wenn negativ -> verzweige
   moveq   #FALSE,d0
@@ -1462,7 +1462,7 @@ get_channel_amplitude
   bne.s   no_get_channel_amplitude ;Nein -> verzweige
   moveq   #FALSE,d1          ;Zähler für Ergebnis
   move.b  d1,n_note_trigger(a0) ;Note Trigger Flag zurücksetzen
-  move.w  n_period(a0),d0    ;Angespielte Periode holen
+  move.w  n_period(a0),d0    ;Angespielte Periode 
   DIVUF.W d2,d0,d1
   moveq   #vm_max_period_step,d0
   sub.w   d1,d0              ;maxperstep - perstep
@@ -1484,7 +1484,7 @@ tb_get_yz_coordinates
   move.w  tb_y_angle(a3),d4 ;1. Y-Winkel
   move.w  d4,d0              
   move.w  tb_y_angle_step_angle(a3),d5 ;1. Y-Step-Winkel
-  add.b   (vm_audio_channel1_info+vm_aci_yanglespeed+1,pc,d1.w*2),d0 ;Y-Winkel erhöhen
+  add.b   (vm_audio_channel1_info+vm_aci_yanglespeed+1,pc,d1.w*2),d0 ;nächster Y-Winkel
   move.w  d0,tb_y_angle(a3) 
   move.w  d5,d0
   add.b   (vm_audio_channel1_info+vm_aci_yanglestep+1,pc,d1.w*2),d0
@@ -1499,7 +1499,7 @@ tb_get_yz_coordinates_loop1
   MULUF.L tb_y_angle_step_radius*2,d0,d1
   swap    d0
   add.w   a4,d0              ;y' + Y-Step-Mittelpunkt
-  move.w  d4,d2              ;Y-Winkel holen
+  move.w  d4,d2              ;Y-Winkel
   add.b   d0,d4              ;nächster Y-Winkel
   moveq   #tb_bars_number-1,d6  ;Anzahl der Stangen
 tb_get_yz_coordinates_loop2
@@ -1589,11 +1589,11 @@ tb_skip_background_bar
 ; ---------------------------
   CNOP 0,4
 make_striped_bar
-  move.w  ssb_y_angle(a3),d1 ;Y-Winkel holen
+  move.w  ssb_y_angle(a3),d1 ;Y-Winkel
   move.w  d1,d0              
   addq.w  #ssb_y_angle_speed,d0 ;nächster Y-Winkel
   and.w   #(sine_table_length/2)-1,d0 ;Überlauf entfernen
-  move.w  d0,ssb_y_angle(a3) ;Y-Winkel retten
+  move.w  d0,ssb_y_angle(a3) 
   lea     sine_table(pc),a0    
   move.l  (a0,d1.w*4),d0     ;sin(w)
   MULUF.L ssb_y_radius*2,d0,d1 ;y'=(yr*sin(w))/2^15
@@ -1611,7 +1611,7 @@ make_striped_bar
   move.w  #cl2_extension1_SIZE,a2
   moveq   #(ssb_bar_height)-1,d7 ;Höhe der Bar
 make_striped_bar_loop
-  move.b  (a0)+,d0           ;Switchwert holen
+  move.b  (a0)+,d0           ;Switchwert 
   move.b  d0,(a1)            ;1. Spalte in CL
   move.b  d0,4(a1)           ;2. Spalte in CL
   move.b  d0,8(a1)           ;...
@@ -1710,7 +1710,7 @@ sp_make_color_offsets_table
 sp_make_color_offsets_table_loop1
   moveq   #sp_stripe_height-1,d6 ;Höhe eines Streifens
 sp_make_color_offsets_table_loop2
-  move.w  (a0)+,d0           ;Y-Offset holen
+  move.w  (a0)+,d0           ;Y-Offset 
   move.w  d1,(a1,d0.w*2)     ;Farboffset eintragen
   dbf     d6,sp_make_color_offsets_table_loop2
   swap    d1                 ;Farboffsets vertauschen
@@ -1731,7 +1731,7 @@ sp_make_pattern
   ADDF.W  cl1_COLOR00_high4+2,a2 
   moveq   #ssb_bar_height-1,d7 ;Anzahl der Zeilen
 sp_make_stripe_bar_loop
-  move.w  (a0)+,d0           ;Farboffset holen
+  move.w  (a0)+,d0           ;Farboffset 
   move.w  (a1,d0.w*4),(a2)   ;COLOR00 High-Bits
   move.w  2(a1,d0.w*4),cl1_COLOR00_low1-cl1_COLOR00_high1(a2) ;COLOR00 Low-Bits
   addq.w  #8,a1              ;Nächster Farbwert in Farbtabelle
@@ -1766,7 +1766,7 @@ horiz_scrolltext
 horiz_scrolltext_loop
   moveq   #TRUE,d0           ;Langwort-Zugriff
   move.w  (a0),d0            ;X-Position
-  move.w  d0,d2              ;X retten
+  move.w  d0,d2              
   lsr.w   #3,d0              ;X/8
   WAITBLITTER
   move.l  (a1)+,(a2)         ;Char-Image
@@ -1782,7 +1782,7 @@ hst_new_character_image
   add.w   d5,d2              ;X-Pos Neustart
   move.l  (a7)+,a0
 hst_no_new_character_image
-  move.w  d2,(a0)+           ;X-Pos retten
+  move.w  d2,(a0)+           
   dbf     d7,horiz_scrolltext_loop
   movem.l (a7)+,a4-a5
   move.w  #DMAF_BLITHOG,DMACON-DMACONR(a6) ;BLTPRI aus
@@ -1873,16 +1873,16 @@ bar_fader_in
   tst.w   bfi_state(a3)      ;Bar-Fader-In an ?
   bne.s   no_bar_fader_in    ;Nein -> verzweige
   movem.l a4-a6,-(a7)
-  move.w  bfi_fader_angle(a3),d2 ;Fader-Winkel holen
+  move.w  bfi_fader_angle(a3),d2 ;Fader-Winkel 
   move.w  d2,d0
   ADDF.W  bfi_fader_angle_speed,d0 ;nächster Fader-Winkel
   cmp.w   #sine_table_length/2,d0 ;Y-Winkel <= 180 Grad ?
   ble.s   bfi_save_fader_angle ;Ja -> verzweige
   MOVEF.W sine_table_length/2,d0 ;180 Grad
 bfi_save_fader_angle
-  move.w  d0,bfi_fader_angle(a3) ;Fader-Winkel retten
+  move.w  d0,bfi_fader_angle(a3) 
   MOVEF.W bf_colors_number*3,d6 ;Zähler
-  lea     sine_table(pc),a0  ;Sinus-Tabelle
+  lea     sine_table(pc),a0  
   move.l  (a0,d2.w*4),d0     ;sin(w)
   MULUF.L bfi_fader_radius*2,d0,d1 ;y'=(yr*sin(w))/2^15
   swap    d0
@@ -1912,16 +1912,16 @@ bar_fader_out
   tst.w   bfo_state(a3)      ;Bar-Fader-Out an ?
   bne.s   no_bar_fader_out   ;Nein -> verzweige
   movem.l a4-a6,-(a7)
-  move.w  bfo_fader_angle(a3),d2 ;Fader-Winkel holen
+  move.w  bfo_fader_angle(a3),d2 ;Fader-Winkel 
   move.w  d2,d0
   ADDF.W  bfo_fader_angle_speed,d0 ;nächster Fader-Winkel
   cmp.w   #sine_table_length/2,d0 ;Y-Winkel <= 180 Grad ?
   ble.s   bfo_save_fader_angle ;Ja -> verzweige
   MOVEF.W sine_table_length/2,d0 ;180 Grad
 bfo_save_fader_angle
-  move.w  d0,bfo_fader_angle(a3) ;Fader-Winkel retten
+  move.w  d0,bfo_fader_angle(a3) 
   MOVEF.W bf_colors_number*3,d6 ;Zähler
-  lea     sine_table(pc),a0  ;Sinus-Tabelle
+  lea     sine_table(pc),a0  
   move.l  (a0,d2.w*4),d0     ;sin(w)
   MULUF.L bfo_fader_radius*2,d0,d1 ;y'=(yr*sin(w))/2^15
   swap    d0
@@ -1996,7 +1996,7 @@ bf_no_convert_color_table
 scroll_logo_bottom_in
   tst.w   slbi_state(a3)     ;Scroll-Logo-Bottom-In an ?
   bne.s   no_scroll_logo_bottom_in  ;Nein -> verzweige
-  move.w  slbi_y_angle(a3),d2 ;Y-Winkel holen
+  move.w  slbi_y_angle(a3),d2 ;Y-Winkel
   cmp.w   #sine_table_length/4,d2 ;90 Grad erreicht ?
   bgt.s   slbi_finished      ;Ja -> verzweige
   move.l  a4,-(a7)
@@ -2025,7 +2025,7 @@ slbi_finished
 scroll_logo_bottom_out
   tst.w   slbo_state(a3)     ;Scroll-Logo-Bottom-Out an ?
   bne.s   no_scroll_logo_bottom_out ;Nein -> verzweige
-  move.w  slbo_y_angle(a3),d2 ;Y-Winkel holen
+  move.w  slbo_y_angle(a3),d2 ;Y-Winkel
   cmp.w   #sine_table_length/2,d2 ;180 Grad erreicht ?
   bgt.s   slbo_finished      ;Ja -> verzweige
   move.l  a4,-(a7)
@@ -2085,7 +2085,7 @@ chunky_columns_fader_in
   move.w  ccfi_start(a3),d1  ;Startwert in Spalten-Statustabelle
   moveq   #(cl2_display_width-1)-1,d2 ;Anzahl der Spalten
   lea     tb_fader_columns_mask(pc),a0 ;Tabelle mit Status der Spalten
-  move.w  ccfi_current_mode(a3),d0 ;Fader-In-Modus holen
+  move.w  ccfi_current_mode(a3),d0 ;Fader-In-Modus 
   beq.s   ccfi_mode1_column_fader_in ;Wenn Fader-In-Modus1 -> verzweige
   subq.w  #1,d0              ;Fader-In-Modus2 ?
   beq.s   ccfi_mode2_column_fader_in ;Ja -> verzweige
@@ -2159,7 +2159,7 @@ chunky_columns_fader_out
   move.w  ccfo_start(a3),d1  ;Startwert out Spalten-Statustabelle
   moveq   #(cl2_display_width-1)-1,d2 ;Anzahl der Spalten
   lea     tb_fader_columns_mask(pc),a0 ;Tabelle mit Status der Spalten
-  move.w  ccfo_current_mode(a3),d0 ;Fader-Out-Modus holen
+  move.w  ccfo_current_mode(a3),d0 ;Fader-Out-Modus 
   beq.s   ccfo_mode1_column_fader_out ;Wenn Fader-Out-Modus1 -> verzweige
   subq.w  #1,d0              ;Fader-Out-Modus2 ?
   beq.s   ccfo_mode2_column_fader_out ;Ja -> verzweige
