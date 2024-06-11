@@ -2488,7 +2488,7 @@ vm_audio_channel4_info
 ; **** Twisted-Bars ****
   CNOP 0,4
 tb_colorfradients
-  INCLUDE "Daten:Asm-Sources.AGA/FlexiTwister/colortables/Bars-Colorgradient.ct"
+  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Bars-Colorgradient.ct"
 
 ; ** YZ-Koordinatentabelle **
 ; ---------------------------
@@ -2517,7 +2517,7 @@ sp_color_offsets_table
 ; **** Horiz-Scrolltext ****
   CNOP 0,4
 hst_color_gradient
-  INCLUDE "Daten:Asm-Sources.AGA/FlexiTwister/colortables/Font-Colorgradient.ct"
+  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient.ct"
 
 ; ** ASCII-Buchstaben **
 ; ----------------------
@@ -2548,7 +2548,7 @@ hst_characters_image_pointers
 ; ------------------------------------
   CNOP 0,4
 bfi_color_table
-  INCLUDE "Daten:Asm-Sources.AGA/FlexiTwister/colortables/Striped-Bar-Colorgradient.ct"
+  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Striped-Bar-Colorgradient.ct"
 
 ; ** Zielfarbwerte für Bar-Fader-Out **
 ; -------------------------------------
@@ -2667,12 +2667,12 @@ prg_version DC.B "$VER: RSE-FlexiTwister 1.4 beta (2.6.24)",TRUE
 ; **** PT-Replay ****
   IFEQ pt_split_module
 pt_auddata SECTION pt_audio,DATA
-    INCBIN "Daten:Asm-Sources.AGA/FlexiTwister/modules/MOD.CatchyTune2ReRemix.song"
+    INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/modules/MOD.CatchyTune2ReRemix.song"
 pt_audsmps SECTION pt_audio2,DATA_C
-    INCBIN "Daten:Asm-Sources.AGA/FlexiTwister/modules/MOD.CatchyTune2ReRemix.smps"
+    INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/modules/MOD.CatchyTune2ReRemix.smps"
   ELSE
 pt_auddata SECTION pt_audio,DATA_C
-    INCBIN "Daten:Asm-Sources.AGA/FlexiTwister/modules/mod.CatchyTune2ReRemix"
+    INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/modules/mod.CatchyTune2ReRemix"
   ENDC
 
 
@@ -2681,10 +2681,10 @@ pt_auddata SECTION pt_audio,DATA_C
 
 ; **** Horiz-Scrolltext ****
 hst_image_data SECTION hst_gfx,DATA_C
-  INCBIN "Daten:Asm-Sources.AGA/FlexiTwister/fonts/32x32x2-Font.rawblit"
+  INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/fonts/32x32x2-Font.rawblit"
 
 ; **** Logo *****
 lg_image_data SECTION lg_gfx,DATA
-  INCBIN "Daten:Asm-Sources.AGA/FlexiTwister/graphics/256x54x8x2-Resistance.rawblit"
+  INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/graphics/256x54x8x2-Resistance.rawblit"
 
   END
