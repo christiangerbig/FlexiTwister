@@ -111,8 +111,6 @@ pt_v3.0b
     INCLUDE "music-tracker/pt3-equals.i"
   ENDC
 pt_ciatiming_enabled           EQU TRUE
-pt_usedfx                      EQU %1111110100001000
-pt_usedefx                     EQU %0000100000000000
 pt_finetune_enabled            EQU FALSE
   IFD pt_v3.0b
 pt_metronome_enabled           EQU FALSE
@@ -121,8 +119,10 @@ pt_track_volumes_enabled       EQU TRUE
 pt_track_periods_enabled       EQU FALSE
 pt_music_fader_enabled         EQU TRUE
 pt_split_module_enabled        EQU TRUE
+pt_usedfx                      EQU %1111110100001000
+pt_usedefx                     EQU %0000100000000000
 
-tb_quick_clear_enabled         EQU FALSE
+tb_quick_clear_enabled EQU FALSE
 tb_restore_cl_cpu_enabled      EQU TRUE
 tb_restore_cl_blitter_enabled  EQU FALSE
 
@@ -188,9 +188,6 @@ audio_memory_size              EQU 2
 disk_memory_size               EQU 0
 
 chip_memory_size               EQU 0
-
-AGA_OS_Version                 EQU 39
-
   IFEQ pt_ciatiming_enabled
 CIABCRABITS                    EQU CIACRBF_LOAD
   ENDC
@@ -423,6 +420,7 @@ ct_size3                       EQU color_values_number3*segments_number3
 
 tb_switch_table_size           EQU ct_size1*2
 ssb_switch_table_size          EQU ct_size2
+
 
 pf1_bitplanes_x_offset         EQU 16+32
 pf1_BPL1DAT_x_offset           EQU pf1_bitplanes_x_offset-pf_pixel_per_datafetch
@@ -799,11 +797,11 @@ spr7_y_size2    EQU sprite7_SIZE/(spr_pixel_per_datafetch/4)
     INCLUDE "music-tracker/pt3-variables-offsets.i"
   ENDC
 
-pt_trigger_fx_enabled             RS.W 1
+pt_effects_handler_active             RS.W 1
 
 ; **** Horiz-Scrolltext ****
 hst_image                         RS.L 1
-hst_enabled                        RS.W 1
+hst_enabled        RS.W 1
 hst_text_table_start              RS.W 1
 hst_text_BLTCON0BITS              RS.W 1
 hst_character_toggle_image        RS.W 1
@@ -912,7 +910,7 @@ init_own_variables
   ENDC
 
   moveq   #0,d0
-  move.w  d0,pt_trigger_fx_enabled(a3)
+  move.w  d0,pt_effects_handler_active(a3)
 
 ; **** Horiz-Scrolltext ****
   lea     hst_image_data,a0
@@ -2242,7 +2240,7 @@ mouse_handler
   CNOP 0,4
 mh_quit
   moveq   #FALSE,d1
-  move.w  d1,pt_trigger_fx_enabled(a3) ;FX-Abfrage aus
+  move.w  d1,pt_effects_handler_active(a3) ;FX-Abfrage aus
   moveq   #0,d0
   tst.w   hst_enabled(a3)     ;Scrolltext aktiv ?
   beq.s   mh_quit_with_scrolltext ;Ja -> verzweige
@@ -2314,16 +2312,16 @@ VERTB_int_server
 ; ** PT-replay routine **
 ; -----------------------
   IFD pt_v2.3a
-    PT2_REPLAY pt_trigger_fx
+    PT2_REPLAY pt_effects_handler
   ENDC
   IFD pt_v3.0b
-    PT3_REPLAY pt_trigger_fx
+    PT3_REPLAY pt_effects_handler
   ENDC
 
 ;--> 8xy "Not used/custom" <--
   CNOP 0,4
-pt_trigger_fx
-  tst.w   pt_trigger_fx_enabled(a3) ;Check enabled?
+pt_effects_handler
+  tst.w   pt_effects_handler_active(a3) ;Check enabled?
   bne.s   pt_no_trigger_fx   ;No -> skip
   move.b  n_cmdlo(a2),d0     ;Get command data x = Effekt y = TRUE/FALSE
   cmp.w   #$10,d0
