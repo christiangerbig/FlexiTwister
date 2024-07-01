@@ -1689,7 +1689,7 @@ horiz_scrolltext_loop
   move.w  (a0),d0            ;X-Position
   move.w  d0,d2              
   lsr.w   #3,d0              ;X/8
-  WAIT_BLITTER
+  WAITBLIT
   move.l  (a1)+,(a2)         ;Char-Image
   add.l   d3,d0              ;X-Offset
   move.l  d0,(a4)            ;Playfield
@@ -1711,7 +1711,7 @@ no_horiz_scrolltext
   CNOP 0,4
 hst_init_copy_blit
   move.w  #DMAF_BLITHOG+DMAF_SETCLR,DMACON-DMACONR(a6) ;BLTPRI an
-  WAIT_BLITTER
+  WAITBLIT
   move.l  #(BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC)<<16,BLTCON0-DMACONR(a6) ;Minterm D=A
   moveq   #FALSE,d0
   move.l  d0,BLTAFWM-DMACONR(a6) ;keine Ausmaskierung
@@ -1764,7 +1764,7 @@ hst_horiz_scroll
   tst.w   hst_enabled(a3)     ;Laufschrift an ?
   bne.s   hst_no_horiz_scroll ;Nein -> verweige
   move.l  pf1_construction1(a3),a0
-  WAIT_BLITTER
+  WAITBLIT
   move.l  (a0),a0
   move.w  hst_text_bltcon0_bits(a3),BLTCON0-DMACONR(a6)
   add.l   #(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),a0 ;Y-Zentrierung
