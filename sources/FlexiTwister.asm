@@ -1244,8 +1244,7 @@ horiz_scroll_logo_start
   move.w  hsl_start_x_angle(a3),d2 ;X-Winkel
   cmp.w   #sine_table_length/2,d2 ;180 Grad erreicht ?
   ble.s   proceed_horiz_scroll_logo_start ;Nein -> verzweige
-  moveq   #FALSE,d0
-  move.w  d0,hsl_start_active(a3) ;Berechnung aus
+  move.w  #FALSE,hsl_start_active(a3) ;Berechnung aus
   rts
   CNOP 0,4
 proceed_horiz_scroll_logo_start
@@ -1714,8 +1713,7 @@ hst_check_control_codes
   rts
   CNOP 0,4
 hst_stop_scrolltext
-  moveq   #FALSE,d0
-  move.w  d0,hst_enabled(a3)  ;Text stoppen
+  move.w  #FALSE,hst_enabled(a3)  ;Text stoppen
   moveq   #0,d0           ;Rückgabewert TRUE = Steuerungscode gefunden
   tst.w   quit_active(a3)    ;Soll Intro beendet werden?
   bne.s   hst_normal_stop_scrolltext ;Nein -> verzweige
@@ -1791,8 +1789,7 @@ bfi_save_fader_angle
   movem.l (a7)+,a4-a6
   move.w  d6,bf_colors_counter(a3) ;Image-Fader-In fertig ?
   bne.s   no_bar_fader_in  ;Nein -> verzweige
-  moveq   #FALSE,d0
-  move.w  d0,bfi_active(a3)  ;Bar-Fader-In aus
+  move.w  #FALSE,bfi_active(a3)  ;Bar-Fader-In aus
 no_bar_fader_in
   rts
 
@@ -1829,8 +1826,7 @@ bfo_save_fader_angle
   movem.l (a7)+,a4-a6
   move.w  d6,bf_colors_counter(a3) ;Image-Fader-Out fertig ?
   bne.s   no_bar_fader_out   ;Nein -> verzweige
-  moveq   #FALSE,d0
-  move.w  d0,bfo_active(a3)  ;Bar-Fader-Out aus
+  move.w  #FALSE,bfo_active(a3)  ;Bar-Fader-Out aus
 no_bar_fader_out
   rts
 
@@ -1871,8 +1867,7 @@ bf_convert_colors_loop
   dbf     d7,bf_convert_colors_loop
   tst.w   bf_colors_counter(a3) ;Fading beendet ?
   bne.s   bf_proceed_convert_colors ;Nein -> verzweige
-  moveq   #FALSE,d0
-  move.w  d0,bf_convert_colors_active(a3) ;Konvertieren beendet
+  move.w  #FALSE,bf_convert_colors_active(a3) ;Konvertieren beendet
 bf_proceed_convert_colors
   move.l  (a7)+,a4
 bf_no_convert_colors
@@ -1902,8 +1897,7 @@ no_scroll_logo_bottom_in
   rts
   CNOP 0,4
 slbi_finished
-  moveq   #FALSE,d0
-  move.w  d0,slbi_active(a3) ;Scroll-Logo-Bottom-In aus
+  move.w  #FALSE,slbi_active(a3) ;Scroll-Logo-Bottom-In aus
   rts
 
 ; ** Logo nach unten ausscrollen **
@@ -1930,8 +1924,7 @@ no_scroll_logo_bottom_out
   rts
   CNOP 0,4
 slbo_finished
-  moveq   #FALSE,d0
-  move.w  d0,slbo_active(a3) ;Scroll-Logo-Bottom-Out aus
+  move.w  #FALSE,slbo_active(a3) ;Scroll-Logo-Bottom-Out aus
   rts
 
   CNOP 0,4
@@ -2027,8 +2020,7 @@ ccfi_mode4_column_fader_in
   rts
   CNOP 0,4
 ccfi_finished
-  moveq   #FALSE,d0
-  move.w  d0,ccfi_active(a3) ;Chunky-Columns-Fader-In aus
+  move.w  #FALSE,ccfi_active(a3) ;Chunky-Columns-Fader-In aus
   rts
 
 ; ** Spalten ausblenden **
@@ -2056,8 +2048,7 @@ ccfo_no_chunky_columns_fader_out
 ; ** Spalten von links nach rechts ausblenden **
   CNOP 0,4
 ccfo_mode1_column_fader_out
-  moveq   #FALSE,d0
-  move.b  d0,(a0,d1.w)       ;Spaltenstatus = FALSE (ausblenden)
+  move.b  #FALSE,(a0,d1.w)  ;Spaltenstatus = FALSE (ausblenden)
   addq.w  #1,d1              ;nächste Spalte
   cmp.w   d2,d1              ;Alle Spalten eoutgeblendet ?
   bgt.s   ccfo_finished      ;Ja -> verzweige
@@ -2104,8 +2095,7 @@ ccfo_mode4_column_fader_out
   rts
   CNOP 0,4
 ccfo_finished
-  moveq   #FALSE,d0
-  move.w  d0,ccfo_active(a3) ;Chunky-Columns-Fader-Out aus
+  move.w  #FALSE,ccfo_active(a3) ;Chunky-Columns-Fader-Out aus
   rts
 
 
