@@ -1718,7 +1718,7 @@ hst_stop_scrolltext
   tst.w   quit_active(a3)    ;Soll Intro beendet werden?
   bne.s   hst_normal_stop_scrolltext ;Nein -> verzweige
 hst_quit_and_stop_scrolltext
-  move.w  d0,pt_fade_out_music_active(a3) ;Musik ausfaden
+  move.w  d0,pt_music_fader_active(a3) ;Musik ausfaden
   cmp.w   #sine_table_length/4,slbi_y_angle(a3) ;90 Grad erreicht ?
   blt.s   hst_no_scroll_logo_bottom_out  ;Ja -> verzweige
   move.w  d0,slbo_active(a3) ;Scroll-Logo-Bottom-Out an
@@ -2113,7 +2113,7 @@ mh_quit
   tst.w   hst_enabled(a3)     ;Scrolltext aktiv ?
   beq.s   mh_quit_with_scrolltext ;Ja -> verzweige
 mh_quit_without_scrolltext
-  move.w  d0,pt_fade_out_music_active(a3) ;Musik ausfaden
+  move.w  d0,pt_music_fader_active(a3) ;Musik ausfaden
   cmp.w   #sine_table_length/4,slbi_y_angle(a3) ;90 Grad erreicht ?
   blt.s   mh_skip1           ;Ja -> verzweige
   move.w  d0,slbo_active(a3) ;Scroll-Logo-Bottom-Out an
@@ -2162,7 +2162,7 @@ VERTB_int_server
   ENDC
 
   IFEQ pt_music_fader_enabled
-    bsr.s   pt_fade_out_music
+    bsr.s   pt_music_fader
     bra.s   pt_PlayMusic
 
 ; ** Musik ausblenden **
