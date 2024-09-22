@@ -37,6 +37,9 @@
 ; - Init Copperlisten überarbeitet
 ; - Mit überarbeiteten Include-Files
 
+; V.1.5 Beta
+; - mit überarbeitetem Modul
+
 
 ; PT 8xy-Befehl
 ; 810 Start Bar-Fader-In
@@ -1364,8 +1367,7 @@ get_channels_amplitudes
 get_channel_amplitude
   tst.b   n_note_trigger(a0) ;Neue Note angespielt ?
   bne.s   no_get_channel_amplitude ;Nein -> verzweige
-  moveq   #FALSE,d1          ;Zähler für Ergebnis
-  move.b  d1,n_note_trigger(a0) ;Note Trigger Flag zurücksetzen
+  move.b  #FALSE,n_note_trigger(a0) ;Note Trigger Flag zurücksetzen
   move.w  n_period(a0),d0    ;Angespielte Periode 
   DIVUF.W d2,d0,d1
   moveq   #vm_max_period_step,d0
@@ -1714,15 +1716,12 @@ hst_check_control_codes
   CNOP 0,4
 hst_stop_scrolltext
   move.w  #FALSE,hst_enabled(a3)  ;Text stoppen
-  moveq   #0,d0           ;Rückgabewert TRUE = Steuerungscode gefunden
+  moveq   #0,d0              ;Rückgabewert TRUE = Steuerungscode gefunden
   tst.w   quit_active(a3)    ;Soll Intro beendet werden?
   bne.s   hst_normal_stop_scrolltext ;Nein -> verzweige
 hst_quit_and_stop_scrolltext
   move.w  d0,pt_music_fader_active(a3) ;Musik ausfaden
-  cmp.w   #sine_table_length/4,slbi_y_angle(a3) ;90 Grad erreicht ?
-  blt.s   hst_no_scroll_logo_bottom_out  ;Ja -> verzweige
   move.w  d0,slbo_active(a3) ;Scroll-Logo-Bottom-Out an
-hst_no_scroll_logo_bottom_out
   move.w  d0,ccfo_active(a3) ;Chunky-Columns-Fader-Out an
   moveq   #1,d2
   move.w  d2,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
@@ -2113,11 +2112,13 @@ mh_quit
   tst.w   hst_enabled(a3)     ;Scrolltext aktiv ?
   beq.s   mh_quit_with_scrolltext ;Ja -> verzweige
 mh_quit_without_scrolltext
+  tst.w   hsl_active(a3)     ;Ist Horiz-Logo-Scroll bereits aktiv ?
+  bne.s   mh_no_horiz_scroll_logo_stop ;Nein -> verzweige
+  move.w  d0,hsl_stop_active(a3) ;Horiz-Logo-Scroll-Stop an
+  move.w  #sine_table_length/2,hsl_stop_x_angle(a3) ;180 Grad
+mh_no_horiz_scroll_logo_stop
   move.w  d0,pt_music_fader_active(a3) ;Musik ausfaden
-  cmp.w   #sine_table_length/4,slbi_y_angle(a3) ;90 Grad erreicht ?
-  blt.s   mh_skip1           ;Ja -> verzweige
   move.w  d0,slbo_active(a3) ;Scroll-Logo-Bottom-Out an
-mh_skip1
   move.w  d0,ccfo_active(a3) ;Chunky-Columns-Fader-Out an
   moveq   #1,d2
   move.w  d2,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
@@ -2136,10 +2137,10 @@ mh_skip3
   CNOP 0,4
 mh_quit_with_scrolltext
   tst.w   hsl_active(a3)     ;Ist Horiz-Logo-Scroll bereits aktiv ?
-  bne.s   mh_no_horiz_scroll_logo_stop ;Nein -> verzweige
+  bne.s   mh_no_horiz_scroll_logo_stop2 ;Nein -> verzweige
   move.w  d0,hsl_stop_active(a3) ;Horiz-Logo-Scroll-Stop an
   move.w  #sine_table_length/2,hsl_stop_x_angle(a3) ;180 Grad
-mh_no_horiz_scroll_logo_stop
+mh_no_horiz_scroll_logo_stop2
   moveq   #hst_horiz_scroll_speed2,d2
   move.w  d2,hst_variable_horiz_scroll_speed(a3) ;Doppelte Geschwindigkeit für Laufschrift
   move.w  #hst_stop_text-hst_text,hst_text_table_start(a3) ;Scrolltext beenden
@@ -2407,15 +2408,15 @@ hst_text
   DC.B "3     2     1          "
 
 hst_restart_text
-  DC.B " RESISTANCE PROUDLY PRESENTS THEIR CONTRIBUTION TO GERP 2025 AS AN INTRO CALLED  -FLEXI TWISTER-           "
+  DC.B " RESISTANCE PROUDLY PRESENTS THEIR CONTRIBUTION TO GERP 2025 WITH  -FLEXI TWISTER-           "
 
-  DC.B "YES!  THIS IS PURE RASTER MANIA!  CHECKOUT THE SPRITES!  THE LOGO IS A CLUSTER OF EIGHT ATTACHED SPRITES DISPLAYED ON AN OVERSCAN SCREEN WITHOUT RESTRICSTIONS!           "
+  DC.B "AGAIN A LOGO OF EIGHT ATTACHED SPRITES DISPLAYED ON AN OVERSCAN SCREEN!           "
 
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
     DC.B " "
   ENDR
 
-  DC.B "GREETINGS GO TO  "
+  DC.B "GREETINGS TO  "
   DC.B "-DESIRE-  "
   DC.B "-EPHIDRENA-  "
   DC.B "-FOCUS DESIGN-  "
@@ -2426,47 +2427,44 @@ hst_restart_text
   DC.B "-TEK-  "
   DC.B "-WANTED TEAM-  "
 
-  REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
-  ENDR
-
-  DC.B "THE CREDITS FOR THIS INTRO           "
-
-  DC.B "CODING AND MUSIC BY  -DISSIDENT-           "
-  DC.B "GRAPHICS BY  -NN-           "
+  DC.B "         "
+  DC.B "THE CREDITS    "
+  DC.B "CODING AND MUSIC BY  -DISSIDENT-    "
+  DC.B "GRAPHICS BY  -OPTIC-           "
 
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
     DC.B " "
   ENDR
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
+    DC.B "."
   ENDR
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
+    DC.B "."
   ENDR
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
+    DC.B "."
   ENDR
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
+    DC.B "."
   ENDR
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
+    DC.B "."
   ENDR
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
+    DC.B "."
   ENDR
   REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-    DC.B " "
+    DC.B "."
   ENDR
 
-  DC.B "SEE YOU IN ANOTHER PRODUCTION..."
+  DC.B "SEE YOU IN ANOTHER PRODUCTION...."
 
 hst_stop_text
   REPT ((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1
     DC.B " "
   ENDR
   DC.B ASCII_CTRL_S," "
+
   EVEN
 
 
