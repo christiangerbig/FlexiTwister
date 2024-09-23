@@ -104,7 +104,7 @@ requires_fast_memory           EQU FALSE
 requires_multiscan_monitor     EQU FALSE
 
 workbench_start_enabled        EQU FALSE
-screen_fader_enabled         EQU FALSE
+screen_fader_enabled           EQU FALSE
 text_output_enabled            EQU FALSE
 
 open_border_enabled            EQU TRUE
@@ -825,6 +825,7 @@ ccfo_start                        RS.W 1
 ccfo_columns_delay_counter        RS.W 1
 
 ; **** Main ****
+logo_enabled                      RS.W 1
 fx_active                         RS.W 1
 quit_active                       RS.W 1
 
@@ -939,6 +940,7 @@ init_own_variables
   move.w  d0,ccfo_columns_delay_counter(a3)
 
 ; **** Main ****
+  move.w  d1,logo_enabled(a3)
   move.w  d1,fx_active(a3)
   move.w  d1,quit_active(a3)
   rts
@@ -1662,7 +1664,7 @@ horiz_scrolltext
   bsr.s   hst_get_text_softscroll
   moveq   #hst_text_characters_number-1,d7 ;Anzahl der Chars
 horiz_scrolltext_loop
-  moveq   #0,d0           ;Langwort-Zugriff
+  moveq   #0,d0              ;Langwort-Zugriff
   move.w  (a0),d0            ;X-Position
   move.w  d0,d2              
   lsr.w   #3,d0              ;X/8
@@ -1721,7 +1723,10 @@ hst_stop_scrolltext
   bne.s   hst_normal_stop_scrolltext ;Nein -> verzweige
 hst_quit_and_stop_scrolltext
   move.w  d0,pt_music_fader_active(a3) ;Musik ausfaden
-  move.w  d0,slbo_active(a3) ;Scroll-Logo-Bottom-Out an
+  tst.w   logo_enabled(a3)
+  bne.s   hst_skip
+  move.w  d0,slbo_active(a3)
+hst_skip
   move.w  d0,ccfo_active(a3) ;Chunky-Columns-Fader-Out an
   moveq   #1,d2
   move.w  d2,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
@@ -1897,6 +1902,7 @@ no_scroll_logo_bottom_in
   CNOP 0,4
 slbi_finished
   move.w  #FALSE,slbi_active(a3) ;Scroll-Logo-Bottom-In aus
+  clr.w   logo_enabled(a3)
   rts
 
 ; ** Logo nach unten ausscrollen **
@@ -2047,7 +2053,7 @@ ccfo_no_chunky_columns_fader_out
 ; ** Spalten von links nach rechts ausblenden **
   CNOP 0,4
 ccfo_mode1_column_fader_out
-  move.b  #FALSE,(a0,d1.w)  ;Spaltenstatus = FALSE (ausblenden)
+  move.b  #FALSE,(a0,d1.w)   ;Spaltenstatus = FALSE (ausblenden)
   addq.w  #1,d1              ;nächste Spalte
   cmp.w   d2,d1              ;Alle Spalten eoutgeblendet ?
   bgt.s   ccfo_finished      ;Ja -> verzweige
@@ -2096,7 +2102,6 @@ ccfo_mode4_column_fader_out
 ccfo_finished
   move.w  #FALSE,ccfo_active(a3) ;Chunky-Columns-Fader-Out aus
   rts
-
 
 ; ** Mouse-Handler **
   CNOP 0,4
