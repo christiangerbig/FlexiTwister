@@ -2118,21 +2118,20 @@ mh_quit_without_scrolltext
   move.w  #sine_table_length/2,hsl_stop_x_angle(a3) ;180 Grad
 mh_no_horiz_scroll_logo_stop
   move.w  d0,pt_music_fader_active(a3) ;Musik ausfaden
-  move.w  d0,slbo_active(a3) ;Scroll-Logo-Bottom-Out an
   move.w  d0,ccfo_active(a3) ;Chunky-Columns-Fader-Out an
   moveq   #1,d2
   move.w  d2,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
   move.w  #bf_colors_number*3,bf_colors_counter(a3)
   tst.w   ccfi_active(a3)    ;Chunky-Columns_Fader-In aktiv ?
-  bne.s   mh_skip2           ;Nein -> verzeige
+  bne.s   mh_skip1           ;Nein -> verzeige
   move.w  d1,ccfi_active(a3) ;Chunky-Columns-Fader-In aus
-mh_skip2
+mh_skip1
   move.w  d0,bf_convert_colors_active(a3) ;Konvertieren der Farben an
   move.w  d0,bfo_active(a3)  ;Bar-Fader-Out an
   tst.w   bfi_active(a3)     ;Bar-Fader-In aktiv ?
-  bne.s   mh_skip3           ;Nein -> verzeige
+  bne.s   mh_skip2           ;Nein -> verzeige
   move.w  d1,bfi_active(a3)  ;Bar-Fader-In aus
-mh_skip3
+mh_skip2
   rts
   CNOP 0,4
 mh_quit_with_scrolltext
