@@ -39,6 +39,8 @@
 
 ; V.1.5 Beta
 ; - mit überarbeitetem Modul
+; - Bugfix: Jetzt wird das Logo nach unten gescrollt, wenn die Laufschrift
+;           inaktiv ist.
 
 
 ; PT 8xy-Befehl
@@ -407,6 +409,9 @@ ccfo_mode3                     EQU 2
 ccfo_mode4                     EQU 3
 ccfo_delay_speed               EQU 1
 ccfo_columns_delay             EQU 1
+
+; **** Main ****
+quit_delay                     EQU (hst_origin_character_x_size*(((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1))/hst_horiz_scroll_speed2
 
 
 color_step1                    EQU 256/(tb_bar_height/2)
@@ -828,6 +833,7 @@ ccfo_columns_delay_counter        RS.W 1
 logo_enabled                      RS.W 1
 fx_active                         RS.W 1
 quit_active                       RS.W 1
+quit_delay_counter                RS.W 1
 
 variables_size                    RS.B 0
 
@@ -864,7 +870,7 @@ init_own_variables
     PT3_INIT_VARIABLES
   ENDC
 
-  moveq   #0,d0
+  moveq   #TRUE,d0
   move.w  d0,pt_effects_handler_active(a3)
 
 ; **** Horiz-Scrolltext ****
@@ -943,6 +949,7 @@ init_own_variables
   move.w  d1,logo_enabled(a3)
   move.w  d1,fx_active(a3)
   move.w  d1,quit_active(a3)
+  move.w  d1,quit_delay_counter(a3)
   rts
 
 ; ** Alle Initialisierungsroutinen ausführen **
@@ -1206,6 +1213,7 @@ beam_routines
   bsr     scroll_logo_bottom_out
   bsr     chunky_columns_fader_in
   bsr     chunky_columns_fader_out
+  bsr     control_counters
   bsr     mouse_handler
   tst.w   fx_active(a3)      ;Effekte beendet ?
   bne     beam_routines      ;Nein -> verzweige
@@ -1728,8 +1736,7 @@ hst_quit_and_stop_scrolltext
   move.w  d0,slbo_active(a3)
 hst_skip
   move.w  d0,ccfo_active(a3) ;Chunky-Columns-Fader-Out an
-  moveq   #1,d2
-  move.w  d2,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
+  move.w  #1,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
   move.w  #bf_colors_number*3,bf_colors_counter(a3)
   move.w  d0,bf_convert_colors_active(a3) ;Konvertieren der Farben an
   move.w  d0,bfo_active(a3)  ;Bar-Fader-Out an
@@ -2103,6 +2110,37 @@ ccfo_finished
   move.w  #FALSE,ccfo_active(a3) ;Chunky-Columns-Fader-Out aus
   rts
 
+  CNOP 0,4
+control_counters
+  move.w  quit_delay_counter(a3),d0
+  bmi.s   quit_delay_counter_skip ;Wenn Zähler negativ -> verzweige
+  subq.w  #1,d0
+  bpl.s   quit_delay_counter_save ;Wenn Zähler positiv -> verzweige
+
+  moveq   #FALSE,d1
+  moveq   #TRUE,d2
+  move.w  d2,pt_music_fader_active(a3) ;Musik ausfaden
+  tst.w   logo_enabled(a3)
+  bne.s   cc_skip1
+  move.w  d2,slbo_active(a3)
+cc_skip1
+  move.w  d2,ccfo_active(a3) ;Chunky-Columns-Fader-Out an
+  move.w  #1,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
+  move.w  #bf_colors_number*3,bf_colors_counter(a3)
+  tst.w   ccfi_active(a3)    ;Chunky-Columns_Fader-In aktiv ?
+  bne.s   cc_skip2           ;Nein -> verzeige
+  move.w  d1,ccfi_active(a3) ;Chunky-Columns-Fader-In aus
+cc_skip2
+  move.w  d2,bf_convert_colors_active(a3) ;Konvertieren der Farben an
+  move.w  d2,bfo_active(a3)  ;Bar-Fader-Out an
+  tst.w   bfi_active(a3)     ;Bar-Fader-In aktiv ?
+  bne.s   quit_delay_counter_save ;Nein -> verzeige
+  move.w  d1,bfi_active(a3)  ;Bar-Fader-In aus
+quit_delay_counter_save
+  move.w  d0,quit_delay_counter(a3)
+quit_delay_counter_skip
+  rts
+
 ; ** Mouse-Handler **
   CNOP 0,4
 mouse_handler
@@ -2122,21 +2160,7 @@ mh_quit_without_scrolltext
   move.w  d0,hsl_stop_active(a3) ;Horiz-Logo-Scroll-Stop an
   move.w  #sine_table_length/2,hsl_stop_x_angle(a3) ;180 Grad
 mh_no_horiz_scroll_logo_stop
-  move.w  d0,pt_music_fader_active(a3) ;Musik ausfaden
-  move.w  d0,ccfo_active(a3) ;Chunky-Columns-Fader-Out an
-  moveq   #1,d2
-  move.w  d2,ccfo_columns_delay_counter(a3) ;Verzögerungszähler aktivieren
-  move.w  #bf_colors_number*3,bf_colors_counter(a3)
-  tst.w   ccfi_active(a3)    ;Chunky-Columns_Fader-In aktiv ?
-  bne.s   mh_skip1           ;Nein -> verzeige
-  move.w  d1,ccfi_active(a3) ;Chunky-Columns-Fader-In aus
-mh_skip1
-  move.w  d0,bf_convert_colors_active(a3) ;Konvertieren der Farben an
-  move.w  d0,bfo_active(a3)  ;Bar-Fader-Out an
-  tst.w   bfi_active(a3)     ;Bar-Fader-In aktiv ?
-  bne.s   mh_skip2           ;Nein -> verzeige
-  move.w  d1,bfi_active(a3)  ;Bar-Fader-In aus
-mh_skip2
+  move.w  #quit_delay,quit_delay_counter(a3)
   rts
   CNOP 0,4
 mh_quit_with_scrolltext
@@ -2145,8 +2169,7 @@ mh_quit_with_scrolltext
   move.w  d0,hsl_stop_active(a3) ;Horiz-Logo-Scroll-Stop an
   move.w  #sine_table_length/2,hsl_stop_x_angle(a3) ;180 Grad
 mh_no_horiz_scroll_logo_stop2
-  moveq   #hst_horiz_scroll_speed2,d2
-  move.w  d2,hst_variable_horiz_scroll_speed(a3) ;Doppelte Geschwindigkeit für Laufschrift
+  move.w  #hst_horiz_scroll_speed2,hst_variable_horiz_scroll_speed(a3) ;Doppelte Geschwindigkeit für Laufschrift
   move.w  #hst_stop_text-hst_text,hst_text_table_start(a3) ;Scrolltext beenden
   move.w  d0,quit_active(a3) ;Intro soll nach Text-Stopp beendet werden
   rts
