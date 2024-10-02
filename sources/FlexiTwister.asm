@@ -111,17 +111,9 @@ text_output_enabled            EQU FALSE
 
 open_border_enabled            EQU TRUE
 
-  IFD PROTRACKER_VERSION_2.3A 
-    INCLUDE "music-tracker/pt2-equals.i"
-  ENDC
-  IFD PROTRACKER_VERSION_3.0B
-    INCLUDE "music-tracker/pt3-equals.i"
-  ENDC
 pt_ciatiming_enabled           EQU TRUE
 pt_finetune_enabled            EQU FALSE
-  IFD PROTRACKER_VERSION_3.0B
 pt_metronome_enabled           EQU FALSE
-  ENDC
 pt_mute_enabled                EQU FALSE
 pt_track_volumes_enabled       EQU TRUE
 pt_track_periods_enabled       EQU FALSE
@@ -281,7 +273,7 @@ lg_image_y_position            EQU MINROW
 pt_fade_out_delay              EQU 1 ;Tick
 
 ; **** Volume-Meter ****
-vm_source_channel              EQU 2 ;Nr. 0..3
+vm_source_chan                 EQU 2 ;Nr. 0..3
 vm_period_div                  EQU 26
 vm_max_period_step             EQU 16
 
@@ -433,8 +425,8 @@ tb_switch_table_size           EQU ct_size1*2
 ssb_switch_table_size          EQU ct_size2
 
 
-pf1_bitplanes_x_offset         EQU 16+32
-pf1_BPL1DAT_x_offset           EQU pf1_bitplanes_x_offset-pf_pixel_per_datafetch
+pf1_planes_x_offset         EQU 16+32
+pf1_BPL1DAT_x_offset           EQU pf1_planes_x_offset-pf_pixel_per_datafetch
 
 
   INCLUDE "except-vectors-offsets.i"
@@ -962,12 +954,12 @@ init_main
   IFEQ pt_finetune_enabled
     bsr     pt_InitFtuPeriodTableStarts
   ENDC
-  bsr     vm_init_audio_channel_info_structures
+  bsr     vm_init_audio_chan_info_structures
   bsr     tb_init_color_table
   bsr     ssb_init_color_table
   bsr     hst_init_color_table
   bsr     tb_init_mirror_switch_table
-  bsr     get_channels_amplitudes
+  bsr     get_chans_amplitudes
   bsr     ssb_init_switch_table
   bsr     hst_init_characters_offsets
   bsr     hst_init_characters_x_positions
@@ -999,8 +991,8 @@ init_main
 ; **** Volume-Meter ****
 ; ** Audiochandata-Strukturen initialisieren **
   CNOP 0,4
-vm_init_audio_channel_info_structures
-  lea     vm_audio_channel1_info(pc),a0
+vm_init_audio_chan_info_structures
+  lea     vm_audio_chan1_info(pc),a0
   moveq   #0,d0           
   move.w  d0,(a0)+           ;Y-Winkel Geschwindigkeit
   move.w  d0,(a0)+           ;Y-Winkel Schrittweite
@@ -1031,7 +1023,7 @@ ssb_init_color_table_loop
   CNOP 0,4
 tb_init_color_table
   lea     tb_colorfradients(pc),a0
-  lea     pf1_color_table(pc),a1
+  lea     pf1_rgb8_color_table(pc),a1
   moveq   #(color_values_number1*segments_number1)-1,d7
 tb_init_color_table_loop
   move.l  (a0)+,d0
@@ -1044,7 +1036,7 @@ tb_init_color_table_loop
 ; ** Farbtabelle initialisieren **
 hst_init_color_table
   lea     hst_color_gradient(pc),a0
-  lea     pf1_color_table+(1+(((color_values_number1*segments_number1)+hst_colorrun_y_pos)*2))*LONGWORD_SIZE(pc),a1
+  lea     pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_colorrun_y_pos)*2))*LONGWORD_SIZE(pc),a1
   moveq   #color_values_number3-1,d7
 hst_init_color_table_loop
   move.l  (a0)+,(a1)         ;COLOR01
@@ -1081,12 +1073,12 @@ bf_init_color_table
 ; ** Sprites initialisieren **
   CNOP 0,4
 init_sprites
-  bsr.s   spr_init_pointers_table
+  bsr.s   spr_init_ptrs_table
   bra.s   lg_init_attached_sprites_cluster
 
   INIT_SPRITE_POINTERS_TABLE
 
-  INIT_ATTACHED_SPRITES_CLUSTER lg,spr_pointers_display,,,spr_x_size2,lg_image_y_size,NOHEADER
+  INIT_ATTACHED_SPRITES_CLUSTER lg,spr_ptrs_display,,,spr_x_size2,lg_image_y_size,NOHEADER
 
   CNOP 0,4
 init_CIA_timers
@@ -1098,13 +1090,13 @@ init_CIA_timers
   CNOP 0,4
 init_first_copperlist
   move.l  cl1_construction2(a3),a0 
-  bsr.s   cl1_init_playfield_registers
-  bsr.s   cl1_init_sprite_pointers
-  bsr     cl1_init_color_registers
-  bsr     cl1_init_bitplane_pointers
+  bsr.s   cl1_init_playfield_props
+  bsr.s   cl1_init_sprite_ptrs
+  bsr     cl1_init_colors
+  bsr     cl1_init_plane_ptrs
   COP_MOVEQ TRUE,COPJMP2
-  bsr     cl1_set_sprite_pointers
-  bsr     cl1_set_bitplane_pointers
+  bsr     cl1_set_sprite_ptrs
+  bsr     cl1_set_plane_ptrs
   bra     copy_first_copperlist
 
   COP_INIT_PLAYFIELD_REGISTERS cl1
@@ -1112,8 +1104,8 @@ init_first_copperlist
   COP_INIT_SPRITE_POINTERS cl1
 
   CNOP 0,4
-cl1_init_color_registers
-  COP_INIT_COLOR_HIGH COLOR00,32,pf1_color_table
+cl1_init_colors
+  COP_INIT_COLOR_HIGH COLOR00,32,pf1_rgb8_color_table
   COP_SELECT_COLOR_HIGH_BANK 1
   COP_INIT_COLOR_HIGH COLOR00,32
   COP_SELECT_COLOR_HIGH_BANK 2
@@ -1130,7 +1122,7 @@ cl1_init_color_registers
   COP_INIT_COLOR_HIGH COLOR00,32
 
   COP_SELECT_COLOR_LOW_BANK 0
-  COP_INIT_COLOR_LOW COLOR00,32,pf1_color_table
+  COP_INIT_COLOR_LOW COLOR00,32,pf1_rgb8_color_table
   COP_SELECT_COLOR_LOW_BANK 1
   COP_INIT_COLOR_LOW COLOR00,32
   COP_SELECT_COLOR_LOW_BANK 2
@@ -1158,7 +1150,7 @@ cl1_init_color_registers
   CNOP 0,4
 init_second_copperlist
   move.l  cl2_construction1(a3),a0 
-  bsr.s   cl2_init_bplcon4_registers
+  bsr.s   cl2_init_bplcon4
   bsr.s   cl2_init_copper_interrupt
   COP_LISTEND
   bsr     copy_second_copperlist
@@ -1196,11 +1188,11 @@ beam_routines
   bsr     tb_clear_second_copperlist
   bsr     cl2_update_BPL1DAT
   bsr     bf_convert_colors
-  bsr     sp_get_stripes_y_coordinates
+  bsr     sp_get_stripes_y_coords
   bsr     sp_make_color_offsets_table
   bsr     sp_make_pattern
-  bsr     get_channels_amplitudes
-  bsr     tb_get_yz_coordinates
+  bsr     get_chans_amplitudes
+  bsr     tb_get_yz_coords
   bsr     tb_set_background_bars
   bsr     make_striped_bar
   bsr     tb_set_foreground_bars
@@ -1229,7 +1221,7 @@ swap_playfield1
   moveq   #ssb_y_radius,d1   
   sub.w   hst_text_y_offset(a3),d1 ;Playfield vertikal zentrieren
   MULUF.W pf1_plane_width*pf1_depth3,d1 ;Y-Offset in Playfield
-  ADDF.W  pf1_bitplanes_x_offset/8,d1
+  ADDF.W  pf1_planes_x_offset/8,d1
   move.l  cl1_display(a3),a0
   ADDF.W  cl1_BPL1PTH+2,a0
   move.l  pf1_construction1(a3),a2
@@ -1313,7 +1305,7 @@ horiz_scroll_logo
   MOVEF.W lg_image_y_size,d5 ;Höhe
   add.w   d4,d5              ;Höhe dazuaddieren
   MOVEF.W spr_x_size2*4,d6
-  lea     spr_pointers_display(pc),a2 ;Zeiger auf Sprites
+  lea     spr_ptrs_display(pc),a2 ;Zeiger auf Sprites
   moveq   #(spr_used_number/2)-1,d7 ;Anzahl der Attached-Sprites
 horiz_scroll_logo_loop
   move.w  d3,d0              ;HSTART
@@ -1359,24 +1351,24 @@ cl2_update_BPL1DAT_loop
 ; ** Amplituden der einzelnen Kanäle in Erfahrung bringen **
 
   CNOP 0,4
-get_channels_amplitudes
+get_chans_amplitudes
   moveq   #vm_period_div,d2
   lea	  pt_audchan1temp(pc),a0 ;Zeiger auf temporäre Struktur des 1. Kanals
-  lea     vm_audio_channel1_info(pc),a1
-  bsr.s   get_channel_amplitude
+  lea     vm_audio_chan1_info(pc),a1
+  bsr.s   get_chan_amplitude
   lea	  pt_audchan2temp(pc),a0 ;Zeiger auf temporäre Struktur des 2. Kanals
-  bsr.s   get_channel_amplitude
+  bsr.s   get_chan_amplitude
   lea	  pt_audchan3temp(pc),a0 ;Zeiger auf temporäre Struktur des 3. Kanals
-  bsr.s   get_channel_amplitude
+  bsr.s   get_chan_amplitude
   lea	  pt_audchan4temp(pc),a0 ;Zeiger auf temporäre Struktur des 4. Kanals
 
 ; ** Routine get-channel-amplitude **
 ; d2 ... Skalierung
 ; a0 ... Temporäre Struktur des Audiokanals
 ; a1 ... Zeiger auf Amplitudenwert des Kanals
-get_channel_amplitude
+get_chan_amplitude
   tst.b   n_note_trigger(a0) ;Neue Note angespielt ?
-  bne.s   no_get_channel_amplitude ;Nein -> verzweige
+  bne.s   no_get_chan_amplitude ;Nein -> verzweige
   move.b  #FALSE,n_note_trigger(a0) ;Note Trigger Flag zurücksetzen
   move.w  n_period(a0),d0    ;Angespielte Periode 
   DIVUF.W d2,d0,d1
@@ -1386,30 +1378,30 @@ get_channel_amplitude
   move.w  d0,(a1)+           ;Y-Winkel Geschwindigkeit
   lsr.w   #1,d0              ;/2
   move.w  d0,(a1)+           ;Y-Winkel Schrittweite
-no_get_channel_amplitude
+no_get_chan_amplitude
   rts
 
 ; ** Y+Z-Koordinaten berechnen **
   CNOP 0,4
-tb_get_yz_coordinates
+tb_get_yz_coords
   move.l  a4,-(a7)
-  moveq   #vm_source_channel,d1
+  moveq   #vm_source_chan,d1
   MULUF.W vm_audchaninfo_size/2,d1,d0
   moveq   #tb_y_distance,d3
   move.w  tb_y_angle(a3),d4 ;1. Y-Winkel
   move.w  d4,d0              
   move.w  tb_y_angle_step_angle(a3),d5 ;1. Y-Step-Winkel
-  add.b   (vm_audio_channel1_info+vm_aci_yanglespeed+1,pc,d1.w*2),d0 ;nächster Y-Winkel
+  add.b   (vm_audio_chan1_info+vm_aci_yanglespeed+1,pc,d1.w*2),d0 ;nächster Y-Winkel
   move.w  d0,tb_y_angle(a3) 
   move.w  d5,d0
-  add.b   (vm_audio_channel1_info+vm_aci_yanglestep+1,pc,d1.w*2),d0
+  add.b   (vm_audio_chan1_info+vm_aci_yanglestep+1,pc,d1.w*2),d0
   move.w  d0,tb_y_angle_step_angle(a3) 
   lea     sine_table(pc),a0    
-  lea     tb_yz_coordinates(pc),a1 ;Zeiger auf Y+Z-Koords-Tabelle
+  lea     tb_yz_coords(pc),a1 ;Zeiger auf Y+Z-Koords-Tabelle
   move.w  #tb_y_centre,a2
   move.w  #tb_y_angle_step_centre,a4
   moveq   #(cl2_display_width-1)-1,d7 ;Anzahl der Spalten
-tb_get_yz_coordinates_loop1
+tb_get_yz_coords_loop1
   move.l  (a0,d5.w*4),d0     ;sin(w)
   MULUF.L tb_y_angle_step_radius*2,d0,d1
   swap    d0
@@ -1417,7 +1409,7 @@ tb_get_yz_coordinates_loop1
   move.w  d4,d2              ;Y-Winkel
   add.b   d0,d4              ;nächster Y-Winkel
   moveq   #tb_bars_number-1,d6  ;Anzahl der Stangen
-tb_get_yz_coordinates_loop2
+tb_get_yz_coords_loop2
   moveq   #-(sine_table_length/4),d1 ;- 90 Grad
   move.l  (a0,d2.w*4),d0     ;sin(w)
   add.w   d2,d1              ;Y-Winkel - 90 Grad
@@ -1429,15 +1421,15 @@ tb_get_yz_coordinates_loop2
   MULUF.W cl2_extension1_size/4,d0,d1 ;Y-Offset in CL
   move.w  d0,(a1)+           ;Y retten
   add.b   d3,d2              ;Y-Abstand zur nächsten Bar
-  dbf     d6,tb_get_yz_coordinates_loop2
+  dbf     d6,tb_get_yz_coords_loop2
   addq.b  #tb_y_angle_step_step,d5 ;nächster Y-Step-Winkel
-  dbf     d7,tb_get_yz_coordinates_loop1
+  dbf     d7,tb_get_yz_coords_loop1
   move.l  (a7)+,a4
   rts
 
 ; ** Y-Positionen der Streifen berechnen **
   CNOP 0,4
-sp_get_stripes_y_coordinates
+sp_get_stripes_y_coords
   move.w  sp_stripes_y_angle(a3),d2 ;1. Y-Winkel
   move.w  d2,d0
   MOVEF.W (sine_table_length/2)-1,d5 ;Überlauf
@@ -1447,9 +1439,9 @@ sp_get_stripes_y_coordinates
   ;moveq   #sp_stripes_y_radius*2,d3
   moveq   #sp_stripes_y_center,d4
   lea     sine_table+((sine_table_length/4)*LONGWORD_SIZE)(pc),a0 
-  lea     sp_stripes_y_coordinates(pc),a1 ;Zeiger auf Y-Koordinatentabelle
+  lea     sp_stripes_y_coords(pc),a1 ;Zeiger auf Y-Koordinatentabelle
   moveq   #(sp_stripes_number*sp_stripe_height)-1,d7 ;Anzahl der Zeilen
-sp_get_stripes_y_coordinates_loop
+sp_get_stripes_y_coords_loop
   move.l  (a0,d2.w*4),d0     ;cos(w)
   MULUF.L SP_stripes_y_radius*2,d0,d1 ;y'=(yr*cos(w))/2^15
   swap    d0
@@ -1457,7 +1449,7 @@ sp_get_stripes_y_coordinates_loop
   move.w  d0,(a1)+           
   addq.w  #sp_stripes_y_angle_step,d2 ;nächster Y-Winkel
   and.w   d5,d2              ;Überlauf entfernen
-  dbf     d7,sp_get_stripes_y_coordinates_loop
+  dbf     d7,sp_get_stripes_y_coords_loop
   rts
 
 ; ** Hintere Stangen in Copperliste kopieren **
@@ -1465,7 +1457,7 @@ sp_get_stripes_y_coordinates_loop
 tb_set_background_bars
   movem.l a4-a6,-(a7)
   moveq   #tb_bar_height,d4
-  lea     tb_yz_coordinates(pc),a0 ;Zeiger auf YZ-Koords
+  lea     tb_yz_coords(pc),a0 ;Zeiger auf YZ-Koords
   move.l  cl2_construction2(a3),a2 
   ADDF.W  cl2_extension1_entry+cl2_ext1_BPLCON4_1+2,a2
   move.l  extra_memory(a3),a5 ;Zeiger auf Tabelle mit Switchwerten
@@ -1577,7 +1569,7 @@ make_striped_bar_loop
 tb_set_foreground_bars
   movem.l a4-a6,-(a7)
   moveq   #tb_bar_height,d4
-  lea     tb_yz_coordinates(pc),a0 ;Zeiger auf YZ-Koords
+  lea     tb_yz_coords(pc),a0 ;Zeiger auf YZ-Koords
   move.l  cl2_construction2(a3),a2 
   ADDF.W  cl2_extension1_entry+cl2_ext1_BPLCON4_1+2,a2
   move.l  extra_memory(a3),a5 ;Zeiger auf Tabelle mit Switchwerten
@@ -1614,7 +1606,7 @@ tb_skip_foreground_bar
   CNOP 0,4
 sp_make_color_offsets_table
   moveq   #$00000001,d1      ;Farboffset des ersten und zweiten Streifens
-  lea     sp_stripes_y_coordinates(pc),a0 ;Zeiger auf Y-Koords der Streifen
+  lea     sp_stripes_y_coords(pc),a0 ;Zeiger auf Y-Koords der Streifen
   lea     sp_color_offsets_table(pc),a1 ;Zeiger auf Farboffsetstabelle
   moveq   #sp_stripes_number-1,d7 ;Anzahl der Streifen
 sp_make_color_offsets_table_loop1
@@ -1630,7 +1622,7 @@ sp_make_color_offsets_table_loop2
 ; ** Farbverlauf in Copperliste kopieren **
   CNOP 0,4
 sp_make_pattern
-  move.w  #$0f0f,d3          ;Maske
+  move.w  #GB_NIBBLES_MASK,d3          ;Maske
   moveq   #TRUE,d4           ;Farbregisterzähler
   moveq   #2*8,d5            ;Additionswert für Farbregisterzähler
   lea     sp_color_offsets_table(pc),a0 ;Zeiger auf Farboffsetstabelle
@@ -1662,7 +1654,7 @@ horiz_scrolltext
   move.w  #(hst_copy_blit_y_size*64)+(hst_copy_blit_x_size/16),d4 ;BLTSIZE
   move.w  #hst_text_character_x_restart,d5
   lea     hst_characters_x_positions(pc),a0 ;X-Positionen der Chars
-  lea     hst_characters_image_pointers(pc),a1 ;Zeiger auf Adressen der Chars-Images
+  lea     hst_characters_image_ptrs(pc),a1 ;Zeiger auf Adressen der Chars-Images
   move.l  pf1_construction1(a3),a2
   move.l  (a2),d3
   add.l   #(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),d3 ;Y-Zentrierung
@@ -1796,7 +1788,7 @@ bfi_save_fader_angle
   lsr.l   #8,d0              ;BYTESHIFT
   move.l  d0,a4              ;Additions-/Subtraktionswert für Grün
   MOVEF.W bf_colors_number-1,d7 ;Anzahl der Farben
-  bsr     bf_fader_loop
+  bsr     bf_rgb8_fader_loop
   movem.l (a7)+,a4-a6
   move.w  d6,bf_colors_counter(a3) ;Image-Fader-In fertig ?
   bne.s   no_bar_fader_in  ;Nein -> verzweige
@@ -1833,7 +1825,7 @@ bfo_save_fader_angle
   lsr.l   #8,d0              ;BYTESHIFT
   move.l  d0,a4              ;Additions-/Subtraktionswert für Grün
   MOVEF.W bf_colors_number-1,d7 ;Anzahl der Farben
-  bsr     bf_fader_loop
+  bsr     bf_rgb8_fader_loop
   movem.l (a7)+,a4-a6
   move.w  d6,bf_colors_counter(a3) ;Image-Fader-Out fertig ?
   bne.s   no_bar_fader_out   ;Nein -> verzweige
@@ -1841,7 +1833,7 @@ bfo_save_fader_angle
 no_bar_fader_out
   rts
 
-  COLOR_FADER bf
+  RGB8_COLOR_FADER bf
 
 ; ** Farbwerte umwandeln **
   CNOP 0,4
@@ -1849,7 +1841,7 @@ bf_convert_colors
   tst.w   bf_convert_colors_active(a3) ;Kopieren der Farbwerte beendet ?
   bne.s   bf_no_convert_colors ;Ja -> verzweige
   move.l  a4,-(a7)
-  move.w  #$0f0f,d5          ;Maske RGB-Nibbles
+  move.w  #GB_NIBBLES_MASK,d5          ;Maske RGB-Nibbles
   lea     bf_color_cache+(bf_color_table_offset*LONGWORD_SIZE)(pc),a0 ;Quelle: Puffer für helle Farbwerte
   lea     (bf_color_table_offset*LONGWORD_SIZE)+((bf_colors_number/2)*LONGWORD_SIZE)(a0),a1 ;Puffer für dunkle Farbwerte
   move.l  extra_memory(a3),a2
@@ -1944,7 +1936,7 @@ slb_scroll_logo
   MOVEF.W lg_image_x_position*4,d4 ;X
   MOVEF.W lg_image_y_size,d6 ;Höhe
   add.w   d5,d6              ;Höhe zu Y addieren
-  lea     spr_pointers_display(pc),a2 ;Zeiger auf Sprites
+  lea     spr_ptrs_display(pc),a2 ;Zeiger auf Sprites
   move.w  #spr_x_size2*4,a4
   moveq   #(spr_used_number/2)-1,d7 ;Anzahl der Attached-Sprites
 slb_scroll_logo_loop
@@ -2297,12 +2289,12 @@ NMI_int_server
   INCLUDE "sys-structures.i"
 
   CNOP 0,4
-pf1_color_table
+pf1_rgb8_color_table
   DC.L color00_bits
   DS.L pf1_colors_number-2
   DC.L color255_bits
 
-spr_pointers_display
+spr_ptrs_display
   DS.L spr_number
 
 sine_table
@@ -2337,16 +2329,16 @@ sine_table
 ; Tabelle mit Ausschlägen und Y-Winkeln der einzelnen Kanäle **
 
   CNOP 0,2
-vm_audio_channel1_info
+vm_audio_chan1_info
   DS.B vm_audchaninfo_size
 
-vm_audio_channel2_info
+vm_audio_chan2_info
   DS.B vm_audchaninfo_size
 
-vm_audio_channel3_info
+vm_audio_chan3_info
   DS.B vm_audchaninfo_size
 
-vm_audio_channel4_info
+vm_audio_chan4_info
   DS.B vm_audchaninfo_size
 
 ; **** Twisted-Bars ****
@@ -2355,7 +2347,7 @@ tb_colorfradients
   INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Bars-Colorgradient.ct"
 
 ; ** YZ-Koordinatentabelle **
-tb_yz_coordinates
+tb_yz_coords
   DS.W tb_bars_number*(cl2_display_width-1)*2
 
 ; ** Maske für die Spalten **
@@ -2367,7 +2359,7 @@ tb_fader_columns_mask
 ; **** Striped-Pattern ****
 ; ** Y-Koordinaten der Streifen **
   CNOP 0,2
-sp_stripes_y_coordinates
+sp_stripes_y_coords
   DS.W sp_stripe_height*sp_stripes_number
 
 ; ** Farboffsets **
@@ -2396,7 +2388,7 @@ hst_characters_x_positions
 
 ; ** Tabelle für Char-Image-Adressen **
   CNOP 0,4
-hst_characters_image_pointers
+hst_characters_image_ptrs
   DS.L hst_text_characters_number
 
 ; **** Bar-Fader ****
