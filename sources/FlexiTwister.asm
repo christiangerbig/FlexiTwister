@@ -1,11 +1,11 @@
 ; ##############################
 ; # Programm: FlexiTwister.asm #
 ; # Autor:    Christian Gerbig #
-; # Datum:    02.06.2024       #
-; # Version:  1.4 Beta         #
+; # Datum:    24.10.2024       #
+; # Version:  1.5 Beta         #
 ; # CPU:      68020+           #
-; # FASTMEM:  -                #
-; # Chipset:  AGA              #
+; # Fast-Memory:  -            #
+; # Chipset:  AGA PAL          #
 ; # OS:       3.0+             #
 ; ##############################
 
@@ -41,6 +41,8 @@
 ; - mit überarbeitetem Modul
 ; - Bugfix: Jetzt wird das Logo nach unten gescrollt, wenn die Laufschrift
 ;           inaktiv ist.
+; - CWAIT für BPL1DAT angepasstpasst
+; - mit Logo von Optic, Barfarbe der 1. Bar angepasst
 
 
 ; PT 8xy-Befehl
@@ -122,7 +124,7 @@ pt_split_module_enabled        EQU TRUE
 pt_usedfx                      EQU %1111110100001000
 pt_usedefx                     EQU %0000100000000000
 
-tb_quick_clear_enabled EQU FALSE
+tb_quick_clear_enabled		EQU FALSE
 tb_restore_cl_cpu_enabled      EQU TRUE
 tb_restore_cl_blitter_enabled  EQU FALSE
 
@@ -174,8 +176,8 @@ spr_x_size1                    EQU 0
 spr_x_size2                    EQU 64
 spr_depth                      EQU 2
 spr_colors_number              EQU 0 ;16
-spr_odd_color_table_select     EQU 0
-spr_even_color_table_select    EQU 0
+spr_odd_color_table_select     EQU 1
+spr_even_color_table_select    EQU 1
 spr_used_number                EQU 8
 
   IFD PROTRACKER_VERSION_2.3A 
@@ -221,7 +223,7 @@ MINROW                         EQU VSTART_256_LINES
 pf_pixel_per_datafetch         EQU 16 ;1x
 spr_pixel_per_datafetch        EQU 64 ;4x
 
-display_window_hstart          EQU HSTART_352_PIXEL
+display_window_hstart          EQU HSTART_44_CHUNKY_PIXEL
 display_window_vstart          EQU MINROW
 display_window_hstop           EQU HSTOP_352_pixel
 display_window_vstop           EQU VSTOP_256_LINES
@@ -234,22 +236,22 @@ diwstrt_bits                   EQU ((display_window_vstart&$ff)*DIWSTRTF_V0)+(di
 diwstop_bits                   EQU ((display_window_vstop&$ff)*DIWSTOPF_V0)+(display_window_hstop&$ff)
 ddfstrt_bits                   EQU DDFSTART_320_PIXEL
 ddfstop_bits                   EQU DDFSTOP_OVERSCAN_16_PIXEL
-bplcon0_bits                   EQU BPLCON0F_ECSENA+((pf_depth>>3)*BPLCON0F_BPU3)+(BPLCON0F_COLOR)+((pf_depth&$07)*BPLCON0F_BPU0) 
+bplcon0_bits                   EQU BPLCON0F_ECSENA|((pf_depth>>3)*BPLCON0F_BPU3)+(BPLCON0F_COLOR)+((pf_depth&$07)*BPLCON0F_BPU0)
 bplcon1_bits                   EQU 0
 bplcon2_bits                   EQU BPLCON2F_PF2P2
 bplcon3_bits1                  EQU 0
-bplcon3_bits2                  EQU bplcon3_bits1+BPLCON3F_LOCT
+bplcon3_bits2                  EQU bplcon3_bits1|BPLCON3F_LOCT
 bplcon4_bits                   EQU (BPLCON4F_OSPRM4*spr_odd_color_table_select)+(BPLCON4F_ESPRM4*spr_even_color_table_select)
 diwhigh_bits                   EQU (((display_window_hstop&$100)>>8)*DIWHIGHF_HSTOP8)+(((display_window_vstop&$700)>>8)*DIWHIGHF_VSTOP8)+(((display_window_hstart&$100)>>8)*DIWHIGHF_HSTART8)+((display_window_vstart&$700)>>8)
-fmode_bits                     EQU FMODEF_SPR32+FMODEF_SPAGEM
-color00_bits                   EQU $001429
+fmode_bits                     EQU FMODEF_SPR32|FMODEF_SPAGEM
+color00_bits                   EQU $000308
 color255_bits                  EQU color00_bits
 
 cl2_display_x_size             EQU 352+8 ;45 Spalten
 cl2_display_width              EQU cl2_display_x_size/8
 cl2_display_y_size             EQU visible_lines_number
   IFEQ open_border_enabled
-cl2_hstart1                    EQU display_window_hstart-(1*CMOVE_SLOT_PERIOD)-4
+cl2_hstart1                    EQU (ddfstrt_bits*2)-(pf1_depth3*CMOVE_SLOT_PERIOD)
   ELSE
 cl2_hstart1                    EQU display_window_hstart-4
   ENDC
@@ -259,14 +261,14 @@ cl2_vstart2                    EQU beam_position&$ff
 
 sine_table_length              EQU 256
 
-; **** Logo ****
+b; **** Logo ****
 lg_image_x_size                EQU 256
 lg_image_plane_width           EQU lg_image_x_size/8
 lg_image_y_size                EQU 54
 lg_image_depth                 EQU 4
 lg_image_x_centre              EQU (visible_pixels_number-lg_image_x_size)/2
 
-lg_image_x_position            EQU display_window_hstart+lg_image_x_centre
+lg_image_x_position            EQU display_window_hstart+lg_image_x_centre+14
 lg_image_y_position            EQU MINROW
 
 ; **** PT-Replay ****
@@ -274,8 +276,8 @@ pt_fade_out_delay              EQU 1 ;Tick
 
 ; **** Volume-Meter ****
 vm_source_chan                 EQU 2 ;Nr. 0..3
-vm_period_div                  EQU 26
-vm_max_period_step             EQU 16
+vm_period_div                  EQU 24
+vm_max_period_step             EQU 8
 
 ; **** Twisted-Bars ****
 tb_bars_number                 EQU 3
@@ -365,7 +367,7 @@ bfo_fader_center               EQU bfo_fader_speed_max+1
 bfo_fader_angle_speed          EQU 2
 
 ; **** Horiz-Scroll-Logo ****
-hsl_x_center                   EQU display_window_hstart+((visible_pixels_number-lg_image_x_size)/2)
+hsl_x_center                   EQU display_window_hstart+((visible_pixels_number-lg_image_x_size)/2)+14
 hsl_x_angle_speed              EQU 4
 
 hsl_start_x_radius             EQU (visible_pixels_number-lg_image_x_size)/2
@@ -425,7 +427,7 @@ tb_switch_table_size           EQU ct_size1*2
 ssb_switch_table_size          EQU ct_size2
 
 
-pf1_planes_x_offset         EQU 16+32
+pf1_planes_x_offset            EQU 16+32
 pf1_BPL1DAT_x_offset           EQU pf1_planes_x_offset-pf_pixel_per_datafetch
 
 
@@ -1318,7 +1320,7 @@ horiz_scroll_logo_loop
   move.w  d1,(a1)            ;SPRPOS
   add.w   d6,d3              ;nächste Sprite-X-Position
   move.w  d2,spr_pixel_per_datafetch/8(a0) ;SPRCTL
-  tas     d2                 ;Attached-Bit setzen
+  or.b    #SPRCTLF_ATT,d2                 ;Attached-Bit setzen
   move.w  d2,spr_pixel_per_datafetch/8(a1) ;SPRCTL
   dbf     d7,horiz_scroll_logo_loop
 no_horiz_scroll_logo
@@ -1950,7 +1952,7 @@ slb_scroll_logo_loop
   move.w  d1,(a1)            ;SPRPOS
   add.w   a4,d4              ;nächste Sprite-X-Position
   move.w  d2,spr_pixel_per_datafetch/8(a0) ;SPRCTL
-  tas     d2                 ;Attached-Bit setzen
+  or.b    #SPRCTLF_ATT,d2                 ;Attached-Bit setzen
   move.w  d2,spr_pixel_per_datafetch/8(a1) ;SPRCTL
   dbf     d7,slb_scroll_logo_loop
   rts
@@ -2344,7 +2346,7 @@ vm_audio_chan4_info
 ; **** Twisted-Bars ****
   CNOP 0,4
 tb_colorfradients
-  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Bars-Colorgradient.ct"
+  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Bars-Colorgradient2.ct"
 
 ; ** YZ-Koordinatentabelle **
 tb_yz_coords
@@ -2487,7 +2489,7 @@ hst_stop_text
   EVEN
 
 
-  DC.B "$VER: RSE-FlexiTwister 1.4 beta (2.6.24)",0
+  DC.B "$VER: RSE-FlexiTwister 1.5 beta (24.10.24)",0
   EVEN
 
 
@@ -2513,6 +2515,6 @@ hst_image_data SECTION hst_gfx,DATA_C
 
 ; **** Logo *****
 lg_image_data SECTION lg_gfx,DATA
-  INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/graphics/256x54x8x2-Resistance.rawblit"
+  INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/graphics/RSE_FT_Logo_WIP03d-b.rawblit"
 
   END
