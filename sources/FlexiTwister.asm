@@ -1,7 +1,7 @@
 ; Programm:	FlexiTwister
 ; Autor:	Christian Gerbig
-; Datum:	24.10.2024
-; Version:	1.5 Beta
+; Datum:	31.10.2024
+; Version:	1.6 Beta
 
 
 ; Requirements
@@ -47,10 +47,13 @@
 ;   inaktiv ist.
 ; - CWAIT für BPL1DAT angepasst
 ; - mit Logo von Optic, Barfarbe der 1. Bar angepasst
-; - Scrolltext ändert seine Farbe
+
+; V.1.6 Beta
+; - mit überarbeitetem Modul
+; - mit überarbeitetem Logo von Optic
+; - Scrolltext ändert 4x seine Farbe
 ; - Wait-Command für Scrolltext
 ; - Alle Farbverläufe an 1. Bar angepasst
-; - überarbeitetes Logo von Optic
 
 
 ; PT 8xy-Befehl
@@ -2645,7 +2648,7 @@ hst_stop_text
 	EVEN
 
 
-	DC.B "$VER: RSE-FlexiTwister 1.5 beta (24.10.24)",0
+	DC.B "$VER: RSE-FlexiTwister 1.6 beta (31.10.24)",0
 	EVEN
 
 
