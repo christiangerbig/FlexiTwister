@@ -43,6 +43,8 @@
 ;           inaktiv ist.
 ; - CWAIT für BPL1DAT angepasstpasst
 ; - mit Logo von Optic, Barfarbe der 1. Bar angepasst
+; - Mit überarbeitetem Modul
+; (- Bars ändern ihre Farbe)
 
 
 ; PT 8xy-Befehl
@@ -55,7 +57,7 @@
 ; 861 Stop Horiz-Logo-Scroll
 ; 870 Restart Scrolltext
 
-; Ausführungszeit 68020: 253 Rasterzeilen
+; Ausführungszeit 68020: 250 Rasterzeilen
 
 
   SECTION code_and_variables,CODE
@@ -341,8 +343,8 @@ hst_text_characters_number     EQU hst_horiz_scroll_window_x_size/hst_text_chara
 hst_text_x_position            EQU 0
 hst_text_y_position            EQU (pf1_y_size3-hst_text_character_y_size)/2
 
-hst_colorrun_height            EQU hst_text_character_y_size
-hst_colorrun_y_pos             EQU (ssb_bar_height-hst_text_character_y_size)/2
+hst_color_gradient_height            EQU hst_text_character_y_size
+hst_color_gradient_y_pos             EQU (ssb_bar_height-hst_text_character_y_size)/2
 
 hst_copy_blit_x_size           EQU hst_text_character_x_size
 hst_copy_blit_y_size           EQU hst_text_character_y_size*hst_text_character_depth
@@ -411,10 +413,10 @@ quit_delay                     EQU (hst_origin_character_x_size*(((hst_text_char
 color_step1                    EQU 256/(tb_bar_height/2)
 color_step2.1                  EQU 256/(ssb_bar_height/2)
 color_step2.2                  EQU 128/(ssb_bar_height/2)
-color_step3                    EQU 256/hst_colorrun_height
+color_step3                    EQU 256/hst_color_gradient_height
 color_values_number1           EQU tb_bar_height/2
 color_values_number2           EQU ssb_bar_height/2
-color_values_number3           EQU hst_colorrun_height
+color_values_number3           EQU hst_color_gradient_height
 segments_number1               EQU tb_bars_number
 segments_number2               EQU 4
 segments_number3               EQU 1
@@ -428,7 +430,7 @@ ssb_switch_table_size          EQU ct_size2
 
 
 pf1_planes_x_offset            EQU 16+32
-pf1_BPL1DAT_x_offset           EQU pf1_planes_x_offset-pf_pixel_per_datafetch
+pf1_bpl1dat_x_offset           EQU pf1_planes_x_offset-pf_pixel_per_datafetch
 
 
   INCLUDE "except-vectors-offsets.i"
@@ -1038,7 +1040,7 @@ tb_init_color_table_loop
 ; ** Farbtabelle initialisieren **
 hst_init_color_table
   lea     hst_color_gradient(pc),a0
-  lea     pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_colorrun_y_pos)*2))*LONGWORD_SIZE(pc),a1
+  lea     pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a1
   moveq   #color_values_number3-1,d7
 hst_init_color_table_loop
   move.l  (a0)+,(a1)         ;COLOR01
@@ -1182,13 +1184,14 @@ beam_routines
   bsr     swap_first_copperlist
   bsr     swap_second_copperlist
   bsr     swap_playfield1
+  bsr     set_playfield1
   bsr     horiz_scrolltext
   bsr     hst_horiz_scroll
   bsr     horiz_scroll_logo_start
   bsr     horiz_scroll_logo_stop
   bsr     horiz_scroll_logo
   bsr     tb_clear_second_copperlist
-  bsr     cl2_update_BPL1DAT
+  bsr     cl2_update_bpl1dat
   bsr     bf_convert_colors
   bsr     sp_get_stripes_y_coords
   bsr     sp_make_color_offsets_table
@@ -1220,26 +1223,31 @@ beam_routines
 
   CNOP 0,4
 swap_playfield1
+  move.l  pf1_construction1(a3),a2
+  move.l  pf1_construction2(a3),a1
+  move.l  pf1_display(a3),pf1_construction1(a3)
+  move.l  a2,pf1_construction2(a3)
+  move.l  a1,pf1_display(a3)
+  rts
+
+  CNOP 0,4
+set_playfield1
   moveq   #ssb_y_radius,d1   
   sub.w   hst_text_y_offset(a3),d1 ;Playfield vertikal zentrieren
   MULUF.W pf1_plane_width*pf1_depth3,d1 ;Y-Offset in Playfield
   ADDF.W  pf1_planes_x_offset/8,d1
   move.l  cl1_display(a3),a0
   ADDF.W  cl1_BPL1PTH+2,a0
-  move.l  pf1_construction1(a3),a2
-  move.l  pf1_construction2(a3),a1
-  move.l  pf1_display(a3),pf1_construction1(a3)
-  move.l  a2,pf1_construction2(a3)
-  move.l  a1,pf1_display(a3)
+  move.l  pf1_display(a3),a1
   moveq   #pf1_depth3-1,d7   ;Anzahl der Planes
-swap_playfield1_loop
+set_playfield1_loop
   move.l  (a1)+,d0
   add.l   d1,d0              ;n Zeilen überspringen
   move.w  d0,4(a0)           ;BPLxPTL
   swap    d0
   move.w  d0,(a0)            ;BPLxPTH
   addq.w  #8,a0
-  dbf     d7,swap_playfield1_loop
+  dbf     d7,set_playfield1_loop
   rts
 
 
@@ -1330,11 +1338,11 @@ no_horiz_scroll_logo
 
 ; ** Linken Overscan-Bereich updaten **
   CNOP 0,4
-cl2_update_BPL1DAT
+cl2_update_bpl1dat
   moveq   #ssb_y_radius,d0
   sub.w   hst_text_y_offset(a3),d0 ;Playfield vertikal zentrieren
   MULUF.W pf1_plane_width*pf1_depth3,d0 ;Y-Offset in Playfield
-  addq.w  #pf1_BPL1DAT_x_offset/8,d0 ;X-Offset
+  addq.w  #pf1_bpl1dat_x_offset/8,d0 ;X-Offset
   moveq   #pf1_plane_width*pf1_depth3,d1
   MOVEF.L cl2_extension1_size,d2
   move.l  pf1_display(a3),a0
@@ -1342,12 +1350,14 @@ cl2_update_BPL1DAT
   add.l   d0,a0              ;+ X+Y-Offset
   move.l  cl2_display(a3),a1
   ADDF.W  cl2_extension1_entry+cl2_ext1_BPL1DAT+2,a1
-  MOVEF.W visible_lines_number-1,d7 ;Anzahl der Zeilen
-cl2_update_BPL1DAT_loop
-  move.w  (a0),(a1)          ;16 Pixel kopieren
-  add.l   d1,a0              ;nächste Zeile in Playfield
-  add.l   d2,a1              ;nächste Zeile in CL
-  dbf     d7,cl2_update_BPL1DAT_loop
+  MOVEF.W (visible_lines_number/32)-1,d7 ;Anzahl der Zeilen
+cl2_update_bpl1dat_loop
+  REPT 32
+    move.w  (a0),(a1)        ;16 Pixel kopieren
+    add.l   d1,a0            ;nächste Zeile in Playfield
+    add.l   d2,a1            ;nächste Zeile in CL
+  ENDR
+  dbf     d7,cl2_update_bpl1dat_loop
   rts
 
 ; ** Amplituden der einzelnen Kanäle in Erfahrung bringen **
@@ -2371,7 +2381,7 @@ sp_color_offsets_table
 ; **** Horiz-Scrolltext ****
   CNOP 0,4
 hst_color_gradient
-  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient.ct"
+  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient1.ct"
 
 ; ** ASCII-Buchstaben **
 hst_ascii
