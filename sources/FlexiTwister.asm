@@ -41,10 +41,9 @@
 ; - mit überarbeitetem Modul
 ; - Bugfix: Jetzt wird das Logo nach unten gescrollt, wenn die Laufschrift
 ;           inaktiv ist.
-; - CWAIT für BPL1DAT angepasstpasst
+; - CWAIT für BPL1DAT angepasst
 ; - mit Logo von Optic, Barfarbe der 1. Bar angepasst
-; - Mit überarbeitetem Modul
-; (- Bars ändern ihre Farbe)
+; - Scrolltext ändert seine Farbe
 
 
 ; PT 8xy-Befehl
@@ -57,7 +56,12 @@
 ; 861 Stop Horiz-Logo-Scroll
 ; 870 Restart Scrolltext
 
-; Ausführungszeit 68020: 250 Rasterzeilen
+; COLOR00:	3 x 16	=	48 Bars + Sprites, 2. Color-Bank
+; COLOR00:	2 x 40	=	80 gestreife Bar
+; COLOR01:	3 x 16	=	48 Bars + Sprites, 2. Color-Bank
+; COLOR01:	1 x 32 	=	32 Farbverlauf Scrolltext zentriert
+
+; Ausführungszeit 68020: 273 Rasterzeilen
 
 
   SECTION code_and_variables,CODE
@@ -129,6 +133,8 @@ pt_usedefx                     EQU %0000100000000000
 tb_quick_clear_enabled		EQU FALSE
 tb_restore_cl_cpu_enabled      EQU TRUE
 tb_restore_cl_blitter_enabled  EQU FALSE
+
+cfc_rgb8_prefade_enabled	EQU TRUE
 
 dma_bits                       EQU DMAF_SPRITE+DMAF_BLITTER+DMAF_COPPER+DMAF_RASTER+DMAF_MASTER+DMAF_SETCLR
 
@@ -263,7 +269,7 @@ cl2_vstart2                    EQU beam_position&$ff
 
 sine_table_length              EQU 256
 
-b; **** Logo ****
+; **** Logo ****
 lg_image_x_size                EQU 256
 lg_image_plane_width           EQU lg_image_x_size/8
 lg_image_y_size                EQU 54
@@ -405,6 +411,17 @@ ccfo_mode3                     EQU 2
 ccfo_mode4                     EQU 3
 ccfo_delay_speed               EQU 1
 ccfo_columns_delay             EQU 1
+
+; **** Colors-Fader-Cross ****
+cfc_rgb8_start_color		EQU 17
+cfc_rgb8_color_table_offset	EQU 0
+cfc_rgb8_colors_number		EQU hst_color_gradient_height
+cfc_rgb8_color_tables_number	EQU 2
+cfc_rgb8_fader_speed_max	EQU 2
+cfc_rgb8_fader_radius		EQU cfc_rgb8_fader_speed_max
+cfc_rgb8_fader_center		EQU cfc_rgb8_fader_speed_max+1
+cfc_rgb8_fader_angle_speed	EQU 1
+cfc_rgb8_fader_delay		EQU 5*PAL_FPS
 
 ; **** Main ****
 quit_delay                     EQU (hst_origin_character_x_size*(((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1))/hst_horiz_scroll_speed2
@@ -825,6 +842,14 @@ ccfo_current_mode                 RS.W 1
 ccfo_start                        RS.W 1
 ccfo_columns_delay_counter        RS.W 1
 
+; **** Colors-Fader-Cross ****
+cfc_rgb8_active			RS.W 1
+cfc_rgb8_fader_angle		RS.W 1
+cfc_rgb8_fader_delay_counter	RS.W 1
+cfc_rgb8_color_table_start	RS.W 1
+cfc_rgb8_colors_counter		RS.W 1
+cfc_rgb8_copy_colors_active	RS.W 1
+
 ; **** Main ****
 logo_enabled                      RS.W 1
 fx_active                         RS.W 1
@@ -941,6 +966,20 @@ init_main_variables
   move.w  d0,ccfo_start(a3)
   move.w  d0,ccfo_columns_delay_counter(a3)
 
+; **** Colors-Fader-Cross ****
+	IFEQ cfc_rgb8_prefade_enabled
+		move.w	d0,cfc_rgb8_active(a3)
+		move.w	#cfc_rgb8_colors_number*3,cfc_rgb8_colors_counter(a3)
+		move.w	d0,cfc_rgb8_copy_colors_active(a3)
+	ELSE
+		move.w	d1,cfc_rgb8_active(a3)
+		move.w	d0,cfc_rgb8_colors_counter(a3)
+		move.w	d1,cfc_rgb8_copy_colors_active(a3)
+	ENDC
+	move.w	#sine_table_length/4,cfc_rgb8_fader_angle(a3) ; 90 Grad
+	move.w	d1,cfc_rgb8_fader_delay_counter(a3)
+	move.w	d0,cfc_rgb8_color_table_start(a3)
+
 ; **** Main ****
   move.w  d1,logo_enabled(a3)
   move.w  d1,fx_active(a3)
@@ -961,7 +1000,7 @@ init_main
   bsr     vm_init_audio_chan_info_structures
   bsr     tb_init_color_table
   bsr     ssb_init_color_table
-  bsr     hst_init_color_table
+;  bsr     hst_init_color_table
   bsr     tb_init_mirror_switch_table
   bsr     get_chans_amplitudes
   bsr     ssb_init_switch_table
@@ -1038,15 +1077,15 @@ tb_init_color_table_loop
 
 ; **** Horiz-Scrolltext ****
 ; ** Farbtabelle initialisieren **
-hst_init_color_table
-  lea     hst_color_gradient(pc),a0
-  lea     pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a1
-  moveq   #color_values_number3-1,d7
-hst_init_color_table_loop
-  move.l  (a0)+,(a1)         ;COLOR01
-  addq.w  #8,a1
-  dbf     d7,hst_init_color_table_loop
-  rts
+;hst_init_color_table
+;  lea     hst_color_gradient(pc),a0
+;  lea     pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a1
+;  moveq   #color_values_number3-1,d7
+;hst_init_color_table_loop
+;  move.l  (a0)+,(a1)         ;COLOR01
+;  addq.w  #8,a1
+;  dbf     d7,hst_init_color_table_loop
+;  rts
 
 ; **** Twisted-Bars ****
 ; ** Referenz-Switchtabelle initialisieren **
@@ -1175,7 +1214,21 @@ main
 
   CNOP 0,4
 no_sync_routines
-  rts
+	IFEQ cfc_rgb8_prefade_enabled
+		bsr	cfc_rgb8_init_start_colors
+	ENDC
+	rts
+
+	IFEQ cfc_rgb8_prefade_enabled
+		CNOP 0,4
+cfc_rgb8_init_start_colors
+		bsr	cfc_rgb8_copy_color_table
+		bsr	rgb8_colors_fader_cross
+		tst.w	cfc_rgb8_copy_colors_active(a3) ; Kopieren der Farbwerte beendet?
+		beq.s	cfc_rgb8_init_start_colors ; Nein -> verzweige
+		move.w	#-1,cfc_rgb8_copy_colors_active(a3) ; Verzögerungszähler desktivieren
+		rts
+	ENDC
 
 
   CNOP 0,4
@@ -1210,6 +1263,8 @@ beam_routines
   bsr     scroll_logo_bottom_out
   bsr     chunky_columns_fader_in
   bsr     chunky_columns_fader_out
+	bsr	rgb8_colors_fader_cross
+	bsr	cfc_rgb8_copy_color_table
   bsr     control_counters
   bsr     mouse_handler
   tst.w   fx_active(a3)      ;Effekte beendet ?
@@ -2114,13 +2169,137 @@ ccfo_finished
   move.w  #FALSE,ccfo_active(a3) ;Chunky-Columns-Fader-Out aus
   rts
 
+	CNOP 0,4
+rgb8_colors_fader_cross
+	tst.w	cfc_rgb8_active(a3)
+	bne.s	rgb8_colors_fader_cross_quit
+	movem.l a4-a6,-(a7)
+	move.w	cfc_rgb8_fader_angle(a3),d2
+	move.w	d2,d0
+	ADDF.W	cfc_rgb8_fader_angle_speed,d0 ; nächster Fader-Winkel
+	cmp.w	#sine_table_length/2,d0	; Y-Winkel <= 180 Grad ?
+	ble.s	rgb8_colors_fader_cross_skip ; Ja -> verzweige
+	MOVEF.W sine_table_length/2,d0	; 180 Grad
+rgb8_colors_fader_cross_skip
+	move.w	d0,cfc_rgb8_fader_angle(a3) 
+	MOVEF.W cfc_rgb8_colors_number*3,d6 ; Zähler
+	lea	sine_table(pc),a0	
+	move.l	(a0,d2.w*4),d0		; sin(w)
+	MULUF.L cfc_rgb8_fader_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
+	swap	d0
+	ADDF.W	cfc_rgb8_fader_center,d0
+	lea     pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; Puffer für Farbwerte
+	lea	cfc_rgb8_color_table(pc),a1 ; Sollwerte
+	move.w	cfc_rgb8_color_table_start(a3),d1
+	MULUF.W 16,d1
+	lea	(a1,d1.w*8),a1
+	move.w	d0,a5			; Additions-/Subtraktionswert für Blau
+	swap	d0
+	clr.w	d0
+	move.l	d0,a2			; Additions-/Subtraktionswert für Rot
+	lsr.l	#8,d0
+	move.l	d0,a4			; Additions-/Subtraktionswert für Grün
+	MOVEF.W cfc_rgb8_colors_number-1,d7
+	bsr	cfc_rgb8_fader_loop
+	movem.l (a7)+,a4-a6
+	move.w	d6,cfc_rgb8_colors_counter(a3)
+	bne.s	rgb8_colors_fader_cross_quit
+	move.w	#FALSE,cfc_rgb8_active(a3)
+rgb8_colors_fader_cross_quit
+	rts
+
+	RGB8_COLOR_FADER cfc
+
+	CNOP 0,4
+cfc_rgb8_copy_color_table
+	IFNE cl1_size2
+		move.l	a4,-(a7)
+	ENDC
+	tst.w	cfc_rgb8_copy_colors_active(a3)
+	bne.s	cfc_rgb8_copy_color_table_skip2
+	move.w	#GB_NIBBLES_MASK,d3
+	moveq	#cfc_rgb8_start_color,d4 ; Color-Bank Farbregisterzähler
+	lea     pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; Puffer für Farbwerte
+	move.l	cl1_display(a3),a1 
+	ADDF.W	cl1_COLOR17_high5+WORD_SIZE,a1
+	IFNE cl1_size1
+		move.l	cl1_construction1(a3),a2 
+		ADDF.W	cl1_COLOR17_high5+WORD_SIZE,a2
+	ENDC
+	IFNE cl1_size2
+		move.l	cl1_construction2(a3),a4 
+		ADDF.W	cl1_COLOR17_high5+WORD_SIZE,a4
+	ENDC
+	MOVEF.W cfc_rgb8_colors_number-1,d7
+cfc_rgb8_copy_color_table_loop
+	move.l	(a0)+,d0		; RGB8-Farbwert
+	move.l	d0,d2	
+	RGB8_TO_RGB4_HIGH d0,d1,d3
+	move.w	d0,(a1)			; COLORxx High-Bits
+	IFNE cl1_size1
+		move.w	d0,(a2)		; COLORxx High-Bits
+	ENDC
+	IFNE cl1_size2
+		move.w	d0,(a4)		; COLORxx High-Bits
+	ENDC
+	RGB8_TO_RGB4_LOW d2,d1,d3
+	move.w	d2,cl1_COLOR17_low5-cl1_COLOR17_high5(a1) ; Low-Bits COLORxx
+	addq.w	#QUADWORD_SIZE,a1	; nächstes Farbregister
+	IFNE cl1_size1
+		move.w	d2,cl1_COLOR17_low5-cl1_COLOR17_high5(a2) ; Low-Bits COLORxx
+		addq.w	#QUADWORD_SIZE,a2 ; nächstes Farbregister
+	ENDC
+	IFNE cl1_size2
+		move.w	d2,cl1_COLOR17_low5-cl1_COLOR17_high5(a4) ; Low-Bits COLORxx
+		addq.w	#QUADWORD_SIZE,a4 ; nächstes Farbregister
+	ENDC
+	addq.b	#2,d4			; Farbregister-Zähler erhöhen
+	cmp.b	#31,d4
+	ble.s	cfc_rgb8_copy_color_table_skip1
+	and.b	#32-1,d4
+	addq.w	#LONGWORD_SIZE,a1 ; CMOVE überspringen
+	IFNE cl1_size1
+		addq.w	#LONGWORD_SIZE,a2 ; CMOVE überspringen
+	ENDC
+	IFNE cl1_size2
+		addq.w	#LONGWORD_SIZE,a4 ; CMOVE überspringen
+	ENDC
+cfc_rgb8_copy_color_table_skip1
+	dbf	d7,cfc_rgb8_copy_color_table_loop
+	tst.w	cfc_rgb8_colors_counter(a3) ; Fading beendet ?
+	bne.s	cfc_rgb8_copy_color_table_skip2
+	move.w	#FALSE,cfc_rgb8_copy_colors_active(a3)
+	move.w	#cfc_rgb8_fader_delay,cfc_rgb8_fader_delay_counter(a3)
+	move.w	cfc_rgb8_color_table_start(a3),d0
+	addq.w	#1,d0			; nächste Farbtabelle
+	and.w	#cfc_rgb8_color_tables_number-1,d0 ; Überlauf entfernen
+	move.w	d0,cfc_rgb8_color_table_start(a3)
+cfc_rgb8_copy_color_table_skip2
+	IFNE cl1_size2
+		move.l	(a7)+,a4
+	ENDC
+	rts
+
   CNOP 0,4
 control_counters
+	move.w	cfc_rgb8_fader_delay_counter(a3),d0
+	bmi.s	cfc_rgb8_no_fader_delay_counter
+	subq.w	#1,d0
+	bpl.s	cfc_rgb8_save_fader_delay_counter
+cfc_rgb8_fader_enable
+	move.w	#cfc_rgb8_colors_number*3,cfc_rgb8_colors_counter(a3)
+	moveq	#TRUE,d1
+	move.w	d1,cfc_rgb8_copy_colors_active(a3)
+	move.w	d1,cfc_rgb8_active(a3)
+	move.w	#sine_table_length/4,cfc_rgb8_fader_angle(a3) ; 90 Grad
+cfc_rgb8_save_fader_delay_counter
+	move.w	d0,cfc_rgb8_fader_delay_counter(a3) 
+cfc_rgb8_no_fader_delay_counter
+
   move.w  quit_delay_counter(a3),d0
   bmi.s   quit_delay_counter_skip ;Wenn Zähler negativ -> verzweige
   subq.w  #1,d0
   bpl.s   quit_delay_counter_save ;Wenn Zähler positiv -> verzweige
-
   moveq   #FALSE,d1
   moveq   #TRUE,d2
   move.w  d2,pt_music_fader_active(a3) ;Musik ausfaden
@@ -2379,9 +2558,9 @@ sp_color_offsets_table
   DS.W sp_stripe_height*sp_stripes_number
 
 ; **** Horiz-Scrolltext ****
-  CNOP 0,4
-hst_color_gradient
-  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient1.ct"
+;  CNOP 0,4
+;hst_color_gradient
+;  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient1.ct"
 
 ; ** ASCII-Buchstaben **
 hst_ascii
@@ -2420,6 +2599,12 @@ bf_color_cache
   REPT ssb_bar_height
     DC.L color00_bits
   ENDR
+
+; **** Color-Fader-Cross ****
+	CNOP 0,4
+cfc_rgb8_color_table
+  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient1.ct"
+  INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient2.ct"
 
 
   INCLUDE "sys-variables.i"
