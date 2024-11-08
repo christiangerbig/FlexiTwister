@@ -342,7 +342,7 @@ hst_image_x_size		EQU 320
 hst_image_plane_width		EQU hst_image_x_size/8
 hst_image_depth			EQU 1
 hst_origin_character_x_size	EQU 32
-hst_origin_character_y_size	EQU 32
+hst_origin_character_y_size	EQU 30
 
 hst_text_character_x_size	EQU 16
 hst_text_character_width	EQU hst_text_character_x_size/8
@@ -774,8 +774,8 @@ spr7_y_size2			EQU sprite7_size/(spr_pixel_per_datafetch/4)
 
 	RSRESET
 
-em_bplam_table1		RS.B tb_bplam_table_size
-em_bplam_table2		RS.B ssb_bplam_table_size
+em_bplam_table1			RS.B tb_bplam_table_size
+em_bplam_table2			RS.B ssb_bplam_table_size
 	RS_ALIGN_LONGWORD
 em_color_table			RS.L ct_size2
 extra_memory_size		RS.B 0
@@ -936,8 +936,7 @@ init_main_variables
 
 ; **** Stripes-Pattern ****
 	move.w	d0,sp_stripes_y_angle(a3) ; 0 Grad
-	moveq	#sp_stripes_y_angle_speed1,d2
-	move.w	d2,sp_stripes_y_angle_speed(a3)
+	move.w	#sp_stripes_y_angle_speed1,sp_stripes_y_angle_speed(a3)
 
 ; **** Horiz-Scroll-Logo ****
 	move.w	d1,hsl_active(a3)
@@ -1130,7 +1129,7 @@ init_first_copperlist
 	bsr.s	cl1_init_sprite_ptrs
 	bsr	cl1_init_colors
 	bsr	cl1_init_plane_ptrs
-	COP_MOVEQ TRUE,COPJMP2
+	COP_MOVEQ 0,COPJMP2
 	bsr	cl1_set_sprite_ptrs
 	bsr	cl1_set_plane_ptrs
 	bra	copy_first_copperlist
@@ -1260,7 +1259,7 @@ beam_routines
 	bsr	cfc_rgb8_copy_color_table
 	bsr	control_counters
 	bsr	mouse_handler
-	tst.w	stop_fx_active(a3)		; Effekte beendet ?
+	tst.w	stop_fx_active(a3)
 	bne	beam_routines
 	rts
 
@@ -1527,7 +1526,7 @@ tb_set_background_bars_skip1
 	move.l	a5,a1			; Zeiger auf Tabelle mit Switchwerten
 	moveq	#tb_bars_number-1,d6
 tb_set_background_bars_loop2
-	move.l	(a0)+,d0		; Bits 0-15 Y-Pos, Bits 16-31 Z-Vektor
+	move.l	(a0)+,d0		; Bits 0-15: Y-Pos, Bits 16-31: Z-Vektor
 	bpl.s	tb_set_background_bars_skip2
 	add.l	d4,a1			; Switchwerte überspringen
 	bra	tb_set_background_bars_skip3
@@ -1636,7 +1635,7 @@ tb_set_foreground_bars_skip1
 	move.l	a5,a1			; Zeiger auf Tabelle mit Switchwerten
 	moveq	#tb_bars_number-1,d6
 tb_set_foreground_bars_loop2
-	move.l	(a0)+,d0		; Bits 0-15 Y-Pos, Bits 16-31 Z-Vektor
+	move.l	(a0)+,d0		; Bits 0-15: Y-Pos, Bits 16-31: Z-Vektor
 	bmi.s	tb_set_foreground_bars_skip2
 	add.l	d4,a1			; Switchwerte überspringen
 	bra	tb_set_foreground_bars_skip3
@@ -1765,7 +1764,7 @@ hst_check_control_codes
 ; Input
 ; d0.b	... ASCII-Code
 ; Result
-; d0.l	... Rückgabewert: Steuerungscode gefunden
+; d0.l	... Rückgabewert: Return-Code
 	cmp.b	#ASCII_CTRL_P,d0
 	beq.s	hst_pause_scrolltext
 	cmp.b	#ASCII_CTRL_S,d0
@@ -1775,25 +1774,25 @@ hst_check_control_codes
 hst_pause_scrolltext
 	clr.w	hst_pause_horiz_scroll_enabled(a3)
 	move.w	#hst_text_delay,hst_text_delay_counter(a3) ; Delay-Counter starten
-	moveq	#TRUE,d0		; Rückgabewert: Steuerungscode gefunden
+	moveq	#RETURN_OK,d0
 	rts
 	CNOP 0,4
 hst_stop_scrolltext
 	move.w	#FALSE,hst_enabled(a3)	; Text stoppen
-	moveq	#TRUE,d0		; Rückgabewert: Steuerungscode gefunden
 	tst.w	quit_active(a3)		; Soll Intro beendet werden ?
 	bne.s	hst_stop_scrolltext_quit
-	move.w	d0,pt_music_fader_active(a3)
+	clr.w	pt_music_fader_active(a3)
 	tst.w	logo_enabled(a3)
 	bne.s	hst_stop_scrolltext_skip
-	move.w	d0,slbo_active(a3)
+	clr.w	slbo_active(a3)
 hst_stop_scrolltext_skip
-	move.w	d0,ccfo_active(a3)
+	clr.w	ccfo_active(a3)
 	move.w	#1,ccfo_columns_delay_counter(a3) ; Verzögerungszähler aktivieren
 	move.w	#bf_colors_number*3,bf_colors_counter(a3)
-	move.w	d0,bf_convert_colors_active(a3)
-	move.w	d0,bfo_active(a3)
+	clr.w	bf_convert_colors_active(a3)
+	clr.w	bfo_active(a3)
 hst_stop_scrolltext_quit
+	moveq	#RETURN_OK,d0
 	rts
 
 	CNOP 0,4
@@ -2267,9 +2266,8 @@ control_counters
 	subq.w	#1,d0
 	bpl.s	control_counters_skip1
 	move.w	#cfc_rgb8_colors_number*3,cfc_rgb8_colors_counter(a3)
-	moveq	#TRUE,d1
-	move.w	d1,cfc_rgb8_copy_colors_active(a3)
-	move.w	d1,cfc_rgb8_active(a3)
+	clr.w	cfc_rgb8_copy_colors_active(a3)
+	clr.w	cfc_rgb8_active(a3)
 	move.w	#sine_table_length/4,cfc_rgb8_fader_angle(a3) ; 90 Grad
 control_counters_skip1
 	move.w	d0,cfc_rgb8_fader_delay_counter(a3) 
@@ -2287,11 +2285,10 @@ control_counters_skip4
 	bmi.s	control_counters_quit
 	subq.w	#1,d0
 	bpl.s	control_counters_skip7
-	moveq	#TRUE,d1
-	move.w	d1,pt_music_fader_active(a3)
+	clr.w	pt_music_fader_active(a3)
 	tst.w	logo_enabled(a3)
 	bne.s	control_counters_skip5
-	move.w	d1,slbo_active(a3)
+	clr.w	slbo_active(a3)
 control_counters_skip5
 	move.w	d1,ccfo_active(a3)
 	move.w	#1,ccfo_columns_delay_counter(a3) ; Verzögerungszähler aktivieren
@@ -2318,54 +2315,51 @@ mouse_handler
 	CNOP 0,4
 mh_exit_demo
 	move.w	#FALSE,pt_effects_handler_active(a3)
-	moveq	#TRUE,d0
 	tst.w	hst_enabled(a3)
 	bne.s	mh_exit_demo_skip2
 	tst.w	hsl_active(a3)
 	bne.s	mh_exit_demo_skip1
-	move.w	d0,hsl_stop_active(a3)
+	clr.w	hsl_stop_active(a3)
 	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180 Grad
 mh_exit_demo_skip1
 	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3) ; Doppelte Geschwindigkeit für Laufschrift
 	move.w	#hst_stop_text-hst_text,hst_text_table_start(a3) ; Scrolltext beenden
-	move.w	d0,quit_active(a3)	; Intro soll nach Text-Stopp beendet werden
-	rts
+	clr.w	quit_active(a3)	; Intro soll nach Text-Stopp beendet werden
+	bra.s	mh_exit_demo_quit
 	CNOP 0,4
 mh_exit_demo_skip2
 	tst.w	hsl_active(a3)
 	bne.s	mh_exit_demo_skip3
-	move.w	d0,hsl_stop_active(a3)
+	clr.w	hsl_stop_active(a3)
 	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180 Grad
 mh_exit_demo_skip3
 	move.w	#quit_delay,quit_delay_counter(a3)
+mh_exit_demo_quit
 	rts
 
 
 	INCLUDE "int-autovectors-handlers.i"
 
-; ** CIA-B timer A interrupt server **
 	IFEQ pt_ciatiming_enabled
 		CNOP 0,4
 ciab_ta_int_server
 	ENDC
 
-; ** Vertical blank interrupt server **
 	IFNE pt_ciatiming_enabled
 		CNOP 0,4
 VERTB_int_server
 	ENDC
 
+; **** PT-Replay ****
 	IFEQ pt_music_fader_enabled
 		bsr.s	pt_music_fader
 		bra.s	pt_PlayMusic
 
-; ** Musik ausblenden **
 		PT_FADE_OUT_VOLUME stop_fx_active
 
 		CNOP 0,4
 	ENDC
 
-; ** PT-replay routine **
 	IFD PROTRACKER_VERSION_2.3A 
 		PT2_REPLAY pt_effects_handler
 	ENDC
@@ -2373,7 +2367,6 @@ VERTB_int_server
 		PT3_REPLAY pt_effects_handler
 	ENDC
 
-;--> 8xy "Not used/custom" <--
 	CNOP 0,4
 pt_effects_handler
 	tst.w	pt_effects_handler_active(a3)
@@ -2423,9 +2416,8 @@ pt_toggle_stripes_y_movement
 	rts
 	CNOP 0,4
 pt_start_horiz_logo_scroll
-	moveq	#TRUE,d0
-	move.w	d0,hsl_active(a3)
-	move.w	d0,hsl_start_active(a3)
+	clr.w	hsl_active(a3)
+	clr.w	hsl_start_active(a3)
 	move.w	#sine_table_length/4,hsl_start_x_angle(a3) ; 90 Grad
 	rts
 	CNOP 0,4
@@ -2439,18 +2431,14 @@ pt_restart_scrolltext
 	move.w	#hst_restart_text-hst_text,hst_text_table_start(a3) ; Countdown-Text überspringen
 	rts
 
-
-; ** CIA-B Timer B interrupt server **
 	CNOP 0,4
 ciab_tb_int_server
 	PT_TIMER_INTERRUPT_SERVER
 
-; ** Level-6-Interrupt-Server **
 	CNOP 0,4
 EXTER_int_server
 	rts
 
-; ** Level-7-Interrupt-Server **
 	CNOP 0,4
 NMI_int_server
 	rts
@@ -2672,7 +2660,7 @@ pt_auddata SECTION pt_audio,DATA_C
 
 ; **** Horiz-Scrolltext ****
 hst_image_data SECTION hst_gfx,DATA_C
-	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/fonts/32x32x2-Font.rawblit"
+	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/fonts/32x30x2-Font.rawblit"
 
 ; **** Logo *****
 lg_image_data SECTION lg_gfx,DATA
