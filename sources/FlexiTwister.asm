@@ -417,7 +417,7 @@ ccfi_mode2			EQU 1
 ccfi_mode3			EQU 2
 ccfi_mode4			EQU 3
 ccfi_delay_speed		EQU 1
-ccfi_columns_delay		EQU 1
+ccfi_delay			EQU 1
 
 ; **** Chunky-Columns-Fader-Out ****
 ccfo_mode1			EQU 0
@@ -425,7 +425,7 @@ ccfo_mode2			EQU 1
 ccfo_mode3			EQU 2
 ccfo_mode4			EQU 3
 ccfo_delay_speed		EQU 1
-ccfo_columns_delay		EQU 1
+ccfo_delay			EQU 1
 
 ; **** Colors-Fader-Cross ****
 cfc_rgb8_start_color		EQU 17
@@ -853,13 +853,13 @@ slbo_y_angle			RS.W 1
 ccfi_active			RS.W 1
 ccfi_current_mode		RS.W 1
 ccfi_start			RS.W 1
-ccfi_columns_delay_counter	RS.W 1
+ccfi_delay_counter		RS.W 1
 
 ; **** Chunky-Columns-Fader-Out ****
 ccfo_active			RS.W 1
 ccfo_current_mode		RS.W 1
 ccfo_start			RS.W 1
-ccfo_columns_delay_counter	RS.W 1
+ccfo_delay_counter		RS.W 1
 
 ; **** Colors-Fader-Cross ****
 cfc_rgb8_active			RS.W 1
@@ -976,13 +976,13 @@ init_main_variables
 	move.w	d1,ccfi_active(a3)
 	move.w	#ccfi_mode1,ccfi_current_mode(a3)
 	move.w	d0,ccfi_start(a3)
-	move.w	d0,ccfi_columns_delay_counter(a3)
+	move.w	d0,ccfi_delay_counter(a3)
 
 ; **** Chunky-Columns-Fader-Out ****
 	move.w	d1,ccfo_active(a3)
 	move.w	#ccfo_mode1,ccfo_current_mode(a3)
 	move.w	d0,ccfo_start(a3)
-	move.w	d0,ccfo_columns_delay_counter(a3)
+	move.w	d0,ccfo_delay_counter(a3)
 
 ; **** Colors-Fader-Cross ****
 	IFEQ cfc_rgb8_prefade_enabled
@@ -1514,7 +1514,7 @@ tb_set_background_bars
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
 	move.l	extra_memory(a3),a5	; Zeiger auf Tabelle mit Switchwerten
-	lea	tb_fader_columns_mask(pc),a6
+	lea	ccf_columns_mask(pc),a6
 	moveq	#(cl2_display_width-1)-1,d7 ; Anzahl der Spalten
 tb_set_background_bars_loop1
 	tst.b	(a6)+			; Spalte darstellen ?
@@ -1623,7 +1623,7 @@ tb_set_foreground_bars
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
 	move.l	extra_memory(a3),a5	; Zeiger auf Tabelle mit Switchwerten
-	lea	tb_fader_columns_mask(pc),a6
+	lea	ccf_columns_mask(pc),a6
 	moveq	#(cl2_display_width-1)-1,d7 ; Anzahl der Spalten
 tb_set_foreground_bars_loop1
 	tst.b	(a6)+			; Spalte darstellen ?
@@ -1787,7 +1787,7 @@ hst_stop_scrolltext
 	clr.w	slbo_active(a3)
 hst_stop_scrolltext_skip
 	clr.w	ccfo_active(a3)
-	move.w	#1,ccfo_columns_delay_counter(a3) ; Verzögerungszähler aktivieren
+	move.w	#1,ccfo_delay_counter(a3) ; Verzögerungszähler aktivieren
 	move.w	#bf_colors_number*3,bf_colors_counter(a3)
 	clr.w	bf_convert_colors_active(a3)
 	clr.w	bfo_active(a3)
@@ -2012,25 +2012,25 @@ slb_scroll_logo_loop
 chunky_columns_fader_in
 	tst.w	ccfi_active(a3)
 	bne.s	chunky_columns_fader_in_quit
-	subq.w	#ccfi_delay_speed,ccfi_columns_delay_counter(a3) ; Verzögerungszähler herunterzählen
+	subq.w	#ccfi_delay_speed,ccfi_delay_counter(a3) ; Verzögerungszähler herunterzählen
 	bne.s	chunky_columns_fader_in_quit
-	move.w	#ccfi_columns_delay,ccfi_columns_delay_counter(a3) ; Verzögerungszähler zurücksetzen
+	move.w	#ccfi_delay,ccfi_delay_counter(a3) ; Verzögerungszähler zurücksetzen
 	move.w	ccfi_start(a3),d1
 	moveq	#(cl2_display_width-1)-1,d2 ; Anzahl der Spalten
-	lea	tb_fader_columns_mask(pc),a0 ; Tabelle mit Status der Spalten
+	lea	ccf_columns_mask(pc),a0
 	move.w	ccfi_current_mode(a3),d0
-	beq.s	ccfi_fader_mode1
+	beq.s	ccfi_fader_mode_1
 	subq.w	#1,d0			; Fader-In-Modus2 ?
-	beq.s	ccfi_fader_mode2
+	beq.s	ccfi_fader_mode_2
 	subq.w	#1,d0			; Fader-In-Modus3 ?
-	beq.s	ccfi_fader_mode3
+	beq.s	ccfi_fader_mode_3
 	subq.w	#1,d0			; Fader-In-Modus4 ?
-	beq.s	ccfi_fader_mode4
+	beq.s	ccfi_fader_mode_4
 chunky_columns_fader_in_quit
 	rts
 ; ** Spalten von links nach rechts einblenden **
 	CNOP 0,4
-ccfi_fader_mode1
+ccfi_fader_mode_1
 	clr.b	(a0,d1.w)		; Spaltenstatus: einblenden
 	addq.w	#BYTE_SIZE,d1		; nächste Spalte
 	cmp.w	d2,d1			; Alle Spalten eingeblendet ?
@@ -2039,7 +2039,7 @@ ccfi_fader_mode1
 	rts
 ; ** Spalten von rechts nach links einblenden **
 	CNOP 0,4
-ccfi_fader_mode2
+ccfi_fader_mode_2
 	move.w	d1,d0			; Startwert
 	neg.w	d0
 	addq.w	#BYTE_SIZE,d1		; nächste Spalte
@@ -2050,7 +2050,7 @@ ccfi_fader_mode2
 	rts
 ; ** Spalten gleichzeitig von links und rechts zur Mitte hin einblenden **
 	CNOP 0,4
-ccfi_fader_mode3
+ccfi_fader_mode_3
 	clr.b	(a0,d1.w)		; Spaltenstatus: einblenden
 	move.w	d1,d0			; Startwert
 	neg.w	d0
@@ -2063,7 +2063,7 @@ ccfi_fader_mode3
 	rts
 ; ** Jede 2. Spalte gleichzeitig von links und rechts einblenden **
 	CNOP 0,4
-ccfi_fader_mode4
+ccfi_fader_mode_4
 	clr.b	(a0,d1.w)		; Spaltenstatus: einblenden
 	move.w	d1,d0			; Startwert
 	neg.w	d0
@@ -2082,25 +2082,25 @@ ccfi_fader_mode_skip
 chunky_columns_fader_out
 	tst.w	ccfo_active(a3)
 	bne.s	chunky_columns_fader_out_quit
-	subq.w	#ccfo_delay_speed,ccfo_columns_delay_counter(a3) ; Verzögerungszähler herunterzählen
+	subq.w	#ccfo_delay_speed,ccfo_delay_counter(a3) ; Verzögerungszähler herunterzählen
 	bne.s	chunky_columns_fader_out_quit
-	move.w	#ccfo_columns_delay,ccfo_columns_delay_counter(a3) ; Verzögerungszähler zurücksetzen
+	move.w	#ccfo_delay,ccfo_delay_counter(a3) ; Verzögerungszähler zurücksetzen
 	move.w	ccfo_start(a3),d1
 	moveq	#(cl2_display_width-1)-1,d2 ; Anzahl der Spalten
-	lea	tb_fader_columns_mask(pc),a0 ; Tabelle mit Status der Spalten
+	lea	ccf_columns_mask(pc),a0
 	move.w	ccfo_current_mode(a3),d0
-	beq.s	ccfo_fader_mode1
+	beq.s	ccfo_fader_mode_1
 	subq.w	#1,d0			; Fader-Out-Modus2 ?
-	beq.s	ccfo_fader_mode2
+	beq.s	ccfo_fader_mode_2
 	subq.w	#1,d0			; Fader-Out-Modus3 ?
-	beq.s	ccfo_fader_mode3
+	beq.s	ccfo_fader_mode_3
 	subq.w	#1,d0			; Fader-Out-Modus4 ?
-	beq.s	ccfo_fader_mode4
+	beq.s	ccfo_fader_mode_4
 chunky_columns_fader_out_quit
 	rts
 ; ** Spalten von links nach rechts ausblenden **
 	CNOP 0,4
-ccfo_fader_mode1
+ccfo_fader_mode_1
 	move.b	#FALSE,(a0,d1.w)	; Spaltenstatus: ausblenden
 	addq.w	#BYTE_SIZE,d1		; nächste Spalte
 	cmp.w	d2,d1			; Alle Spalten ausgeblendet ?
@@ -2109,7 +2109,7 @@ ccfo_fader_mode1
 	rts
 ; ** Spalten von rechts nach links ausblenden **
 	CNOP 0,4
-ccfo_fader_mode2
+ccfo_fader_mode_2
 	move.w	d1,d0			; Startwert
 	neg.w	d0
 	addq.w	#BYTE_SIZE,d1		; nächste Spalte
@@ -2120,7 +2120,7 @@ ccfo_fader_mode2
 	rts
 ; ** Spalten gleichzeitig von links und rechts zur Mitte hin ausblenden **
 	CNOP 0,4
-ccfo_fader_mode3
+ccfo_fader_mode_3
 	move.b	#FALSE,(a0,d1.w)	; Spaltenstatus: ausblenden
 	move.w	d1,d0			; Startwert
 	neg.w	d0
@@ -2133,7 +2133,7 @@ ccfo_fader_mode3
 	rts
 ; ** Jede 2. Spalte gleichzeitig von links und rechts ausblenden **
 	CNOP 0,4
-ccfo_fader_mode4
+ccfo_fader_mode_4
 	move.b	#FALSE,(a0,d1.w)	; Spaltenstatus: ausblenden
 	move.w	d1,d0			; Startwert
 	neg.w	d0
@@ -2291,7 +2291,7 @@ control_counters_skip4
 	clr.w	slbo_active(a3)
 control_counters_skip5
 	move.w	d1,ccfo_active(a3)
-	move.w	#1,ccfo_columns_delay_counter(a3) ; Verzögerungszähler aktivieren
+	move.w	#1,ccfo_delay_counter(a3) ; Verzögerungszähler aktivieren
 	move.w	#bf_colors_number*3,bf_colors_counter(a3)
 	tst.w	ccfi_active(a3)
 	bne.s	control_counters_skip6
@@ -2363,6 +2363,7 @@ VERTB_int_server
 	IFD PROTRACKER_VERSION_2.3A 
 		PT2_REPLAY pt_effects_handler
 	ENDC
+
 	IFD PROTRACKER_VERSION_3.0B
 		PT3_REPLAY pt_effects_handler
 	ENDC
@@ -2392,10 +2393,9 @@ pt_effects_handler_quit
 	rts
 	CNOP 0,4
 pt_start_bar_fader_in
+	clr.w	bfi_active(a3)
 	move.w	#bf_colors_number*3,bf_colors_counter(a3)
-	moveq	#0,d0
-	move.w	d0,bfi_active(a3)
-	move.w	d0,bf_convert_colors_active(a3)
+	clr.w	bf_convert_colors_active(a3)
 	rts
 	CNOP 0,4
 pt_start_scrolltext
@@ -2408,7 +2408,7 @@ pt_start_scroll_logo_bottom_in
 	CNOP 0,4
 pt_start_chunky_columns_fader_in
 	clr.w	ccfi_active(a3)
-	move.w	#1,ccfi_columns_delay_counter(a3) ; Verzögerungszähler aktivieren
+	move.w	#1,ccfi_delay_counter(a3) ; Verzögerungszähler aktivieren
 	rts
 	CNOP 0,4
 pt_toggle_stripes_y_movement
@@ -2471,6 +2471,7 @@ sine_table
 	IFD PROTRACKER_VERSION_2.3A 
 		INCLUDE "music-tracker/pt2-period-table.i"
 	ENDC
+
 	IFD PROTRACKER_VERSION_3.0B
 		INCLUDE "music-tracker/pt3-period-table.i"
 	ENDC
@@ -2506,11 +2507,6 @@ tb_colorfradients
 	CNOP 0,4
 tb_yz_coords
 	DS.W tb_bars_number*(cl2_display_width-1)*2
-
-tb_fader_columns_mask
-	REPT cl2_display_width-1
-		DC.B FALSE
-	ENDR
 
 ; **** Striped-Pattern ****
 	CNOP 0,2
@@ -2554,6 +2550,12 @@ bfo_color_table
 bf_color_cache
 	REPT ssb_bar_height
 		DC.L color00_bits
+	ENDR
+
+; **** Columns_fader ****
+ccf_columns_mask
+	REPT cl2_display_width-1
+		DC.B FALSE
 	ENDR
 
 ; **** Color-Fader-Cross ****
