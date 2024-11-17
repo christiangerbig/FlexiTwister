@@ -1,7 +1,7 @@
 ; Programm:	FlexiTwister
 ; Autor:	Christian Gerbig
-; Datum:	31.10.2024
-; Version:	1.6 Beta
+; Datum:	17.11.2024
+; Version:	1.7 Beta
 
 
 ; Requirements
@@ -57,6 +57,8 @@
 
 ; V.1.7 Beta
 ; - Scrolltextfarben geändert
+; - Modul überarbeitet
+; - Kleineren Font verwendet
 
 
 ; PT 8xy-Befehl
@@ -333,16 +335,16 @@ ssb_y_angle_speed		EQU 3
 sp_stripes_y_radius		EQU ssb_bar_height/2
 sp_stripes_y_center		EQU ssb_bar_height/2
 sp_stripes_y_angle_step		EQU 1
-sp_stripes_y_angle_speed1	EQU 2
-sp_stripes_number		EQU 8
-sp_stripe_height		EQU 16
+sp_stripes_y_angle_speed1	EQU 1
+sp_stripes_number		EQU 16
+sp_stripe_height		EQU 8
 
 ; **** Horiz-Scrolltext ****
 hst_image_x_size		EQU 320
 hst_image_plane_width		EQU hst_image_x_size/8
 hst_image_depth			EQU 1
-hst_origin_character_x_size	EQU 32
-hst_origin_character_y_size	EQU 30
+hst_origin_character_x_size	EQU 16
+hst_origin_character_y_size	EQU 16
 
 hst_text_character_x_size	EQU 16
 hst_text_character_width	EQU hst_text_character_x_size/8
@@ -428,7 +430,7 @@ ccfo_delay_speed		EQU 1
 ccfo_delay			EQU 1
 
 ; **** Colors-Fader-Cross ****
-cfc_rgb8_start_color		EQU 17
+cfc_rgb8_start_color		EQU 1
 cfc_rgb8_color_table_offset	EQU 0
 cfc_rgb8_colors_number		EQU hst_color_gradient_height
 cfc_rgb8_color_tables_number	EQU 4
@@ -1218,7 +1220,7 @@ cfc_rgb8_init_start_colors
 		bsr	rgb8_colors_fader_cross
 		tst.w	cfc_rgb8_copy_colors_active(a3) ; Kopieren der Farbwerte beendet?
 		beq.s	cfc_rgb8_init_start_colors ; Nein -> verzweige
-		move.w	#-1,cfc_rgb8_copy_colors_active(a3) ; Verzögerungszähler desktivieren
+		move.w	#FALSE,cfc_rgb8_copy_colors_active(a3) ; Verzögerungszähler deaktivieren
 		rts
 	ENDC
 
@@ -1321,9 +1323,8 @@ horiz_scroll_logo_stop
 	move.w	hsl_stop_x_angle(a3),d2
 	cmp.w	#sine_table_length/4,d2 ; 90 Grad erreicht ?
 	bgt.s   horiz_scroll_logo_stop_skip
-	moveq	#FALSE,d0
-	move.w	d0,hsl_stop_active(a3)
-	move.w	d0,hsl_active(a3)	; Logo nicht mehr bewegen
+	move.w	#FALSE,hsl_stop_active(a3)
+	move.w	#FALSE,hsl_active(a3)	; Logo nicht mehr bewegen
 	rts
 	CNOP 0,4
 horiz_scroll_logo_stop_skip
@@ -2170,7 +2171,7 @@ rgb8_colors_fader_cross_skip
 	lea	pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; Puffer für Farbwerte
 	lea	cfc_rgb8_color_table(pc),a1 ; Sollwerte
 	move.w	cfc_rgb8_color_table_start(a3),d1
-	MULUF.W 16,d1			; * 128 = Offset in Farbtabelle
+	MULUF.W 8,d1			; * 64 = Offset in Farbtabelle
 	lea	(a1,d1.w*8),a1
 	move.w	d0,a5			; Additions-/Subtraktionswert für Blau
 	swap	d0
@@ -2200,14 +2201,14 @@ cfc_rgb8_copy_color_table
 	moveq	#cfc_rgb8_start_color,d4 ; Color-Bank Farbregisterzähler
 	lea	pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; Puffer für Farbwerte
 	move.l	cl1_display(a3),a1 
-	ADDF.W	cl1_COLOR17_high5+WORD_SIZE,a1
+	ADDF.W	cl1_COLOR01_high6+WORD_SIZE,a1
 	IFNE cl1_size1
 		move.l	cl1_construction1(a3),a2 
-		ADDF.W	cl1_COLOR17_high5+WORD_SIZE,a2
+		ADDF.W	cl1_COLOR01_high6+WORD_SIZE,a2
 	ENDC
 	IFNE cl1_size2
 		move.l	cl1_construction2(a3),a4 
-		ADDF.W	cl1_COLOR17_high5+WORD_SIZE,a4
+		ADDF.W	cl1_COLOR01_high6+WORD_SIZE,a4
 	ENDC
 	MOVEF.W cfc_rgb8_colors_number-1,d7
 cfc_rgb8_copy_color_table_loop
@@ -2222,14 +2223,14 @@ cfc_rgb8_copy_color_table_loop
 		move.w	d0,(a4)		; COLORxx High-Bits
 	ENDC
 	RGB8_TO_RGB4_LOW d2,d1,d3
-	move.w	d2,cl1_COLOR17_low5-cl1_COLOR17_high5(a1) ; Low-Bits COLORxx
+	move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a1) ; Low-Bits COLORxx
 	addq.w	#QUADWORD_SIZE,a1	; nächstes Farbregister
 	IFNE cl1_size1
-		move.w	d2,cl1_COLOR17_low5-cl1_COLOR17_high5(a2) ; Low-Bits COLORxx
+		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a2) ; Low-Bits COLORxx
 		addq.w	#QUADWORD_SIZE,a2 ; nächstes Farbregister
 	ENDC
 	IFNE cl1_size2
-		move.w	d2,cl1_COLOR17_low5-cl1_COLOR17_high5(a4) ; Low-Bits COLORxx
+		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a4) ; Low-Bits COLORxx
 		addq.w	#QUADWORD_SIZE,a4 ; nächstes Farbregister
 	ENDC
 	addq.b	#2,d4			; Farbregister-Zähler erhöhen
@@ -2290,15 +2291,15 @@ control_counters_skip4
 	bne.s	control_counters_skip5
 	clr.w	slbo_active(a3)
 control_counters_skip5
-	move.w	d1,ccfo_active(a3)
+	clr.w	ccfo_active(a3)
 	move.w	#1,ccfo_delay_counter(a3) ; Verzögerungszähler aktivieren
-	move.w	#bf_colors_number*3,bf_colors_counter(a3)
 	tst.w	ccfi_active(a3)
 	bne.s	control_counters_skip6
 	move.w	#FALSE,ccfi_active(a3)
 control_counters_skip6
-	move.w	d1,bf_convert_colors_active(a3)
-	move.w	d1,bfo_active(a3)
+	clr.w	bfo_active(a3)
+	clr.w	bf_convert_colors_active(a3)
+	move.w	#bf_colors_number*3,bf_colors_counter(a3)
 	tst.w	bfi_active(a3)
 	bne.s	control_counters_skip7
 	move.w	#FALSE,bfi_active(a3)
@@ -2324,7 +2325,7 @@ mh_exit_demo
 mh_exit_demo_skip1
 	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3) ; Doppelte Geschwindigkeit für Laufschrift
 	move.w	#hst_stop_text-hst_text,hst_text_table_start(a3) ; Scrolltext beenden
-	clr.w	quit_active(a3)	; Intro soll nach Text-Stopp beendet werden
+	clr.w	quit_active(a3)		; Intro soll nach Text-Stopp beendet werden
 	bra.s	mh_exit_demo_quit
 	CNOP 0,4
 mh_exit_demo_skip2
@@ -2440,7 +2441,7 @@ EXTER_int_server
 	rts
 
 	CNOP 0,4
-NMI_int_server
+nmi_int_server
 	rts
 
 
@@ -2519,7 +2520,7 @@ sp_color_offsets_table
 
 ; **** Horiz-Scrolltext ****
 hst_ascii
-	DC.B "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!?-'():\/ "
+	DC.B "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!?-'():\/#*>< "
 hst_ascii_end
 	EVEN
 
@@ -2538,7 +2539,7 @@ hst_characters_image_ptrs
 ; **** Bar-Fader ****
 	CNOP 0,4
 bfi_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Striped-Bar-Colorgradient2.ct"
+	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Striped-Bar-Colorgradient3.ct"
 
 	CNOP 0,4
 bfo_color_table
@@ -2561,7 +2562,7 @@ ccf_columns_mask
 ; **** Color-Fader-Cross ****
 	CNOP 0,4
 cfc_rgb8_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient4.ct"
+	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient5.ct"
 
 
 	INCLUDE "sys-variables.i"
@@ -2578,59 +2579,59 @@ hst_text
 	REPT hst_text_characters_number/(hst_origin_character_x_size/hst_text_character_x_size)
 		DC.B " "
 	ENDR
-	DC.B "3     2     1          "
+	DC.B "3        2        1                             "
 hst_restart_text
-	DC.B " RESISTANCE PROUDLY PRESENTS THEIR CONTRIBUTION TO GERP 2025 ",ASCII_CTRL_P,"   -FLEXI TWISTER-            "
+	DC.B " RESISTANCE PRESENTS THEIR CONTRIBUTION TO        GERP 2025      ",ASCII_CTRL_P,"   >FLEXI TWISTER<   ",ASCII_CTRL_P,"          "
 
-	DC.B "AGAIN AGA POWER WITH A LOGO OF 8 SPRITES ON AN OVERSCAN SCREEN!           "
+	DC.B "AGA POWER WITH A 8 SPRITES-LOGO IN OVERSCAN!!!           "
 
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
 		DC.B " "
 	ENDR
 
-	DC.B "GREETINGS ",ASCII_CTRL_P,"   "
-	DC.B "-TO ALL ON GERP 2025-   "
-	DC.B "-DESIRE-   "
-	DC.B "-EPHIDRENA-   "
-	DC.B "-FOCUS DESIGN-   "
-	DC.B "-GHOSTOWN-   "
-	DC.B "-NAH-KOLOR-   "
-	DC.B "-PLANET JAZZ-   "
-	DC.B "-SOFTWARE FAILURE-   "
-	DC.B "-TEK-   "
-	DC.B "-WANTED TEAM-   "
+	DC.B "GREETINGS      ",ASCII_CTRL_P,"         "
+	DC.B ">TO ALL ON GERP 2025<         "
+	DC.B ">DESIRE<         "
+	DC.B ">EPHIDRENA<         "
+	DC.B ">FOCUS DESIGN<         "
+	DC.B ">GHOSTOWN<         "
+	DC.B ">NAH-KOLOR<         "
+	DC.B ">PLANET JAZZ<         "
+	DC.B ">SOFTWARE FAILURE<         "
+	DC.B ">TEK<         "
+	DC.B ">WANTED TEAM<         "
 
 	DC.B "         "
-	DC.B "CREDITS  ",ASCII_CTRL_P,"  "
-	DC.B "CODING AND MUSIC  DISSIDENT ",ASCII_CTRL_P,"    "
-	DC.B "GRAPHICS    OPTIC   ",ASCII_CTRL_P,"           "
+	DC.B "CREDITS       ",ASCII_CTRL_P,"       "
+	DC.B "CODING AND MUSIC       DISSIDENT      ",ASCII_CTRL_P,"    "
+	DC.B "GRAPHICS          OPTIC        ",ASCII_CTRL_P,"           "
 
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
 		DC.B " "
 	ENDR
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "."
+		DC.B "*"
 	ENDR
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "."
+		DC.B "*"
 	ENDR
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "."
+		DC.B "*"
 	ENDR
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "."
+		DC.B "*"
 	ENDR
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "."
+		DC.B "*"
 	ENDR
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "."
+		DC.B "*"
 	ENDR
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
 		DC.B " "
 	ENDR
 
-	DC.B "SEE YOU IN ANOTHER PRODUCTION...."
+	DC.B "SEE YOU IN ANOTHER PRODUCTION..."
 hst_stop_text
 	REPT ((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1
 		DC.B " "
@@ -2640,7 +2641,7 @@ hst_stop_text
 	EVEN
 
 
-	DC.B "$VER: RSE-FlexiTwister 1.6 beta (31.10.24)",0
+	DC.B "$VER: RSE-FlexiTwister 1.7 beta (17.11.24)",0
 	EVEN
 
 
@@ -2662,7 +2663,7 @@ pt_auddata SECTION pt_audio,DATA_C
 
 ; **** Horiz-Scrolltext ****
 hst_image_data SECTION hst_gfx,DATA_C
-	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/fonts/32x30x2-Font.rawblit"
+	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/fonts/16x16x2-Font.rawblit"
 
 ; **** Logo *****
 lg_image_data SECTION lg_gfx,DATA
