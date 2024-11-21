@@ -1,9 +1,3 @@
-; Programm:	FlexiTwister
-; Autor:	Christian Gerbig
-; Datum:	17.11.2024
-; Version:	1.7 Beta
-
-
 ; Requirements
 ; CPU:		68020+
 ; Fast-Memory:	-
@@ -60,6 +54,10 @@
 ; - Modul überarbeitet
 ; - Kleineren Font verwendet
 
+; V.1.8 Beta
+; - Fx-Befehle 861->870, 870->880
+; - neuer Fx-Befehl 89n zur Auswahl des Audiokanals n=0..3 für den Twister
+
 
 ; PT 8xy-Befehl
 ; 810	Start Bar-Fader-In
@@ -68,8 +66,9 @@
 ; 840	Start Chunky-Columns-Fader-In
 ; 850	Toggle Stripes Y-Movement
 ; 860	Start Horiz-Logo-Scroll
-; 861 	Stop Horiz-Logo-Scroll
-; 870	Restart Scrolltext
+; 870 	Stop Horiz-Logo-Scroll
+; 880	Restart Scrolltext
+; 89n	Select audio channel for twister
 
 ; COLOR00:	3 x 16	=	48 Bars + Sprites, 2. Color-Bank
 ; COLOR00:	2 x 40	=	80 gestreife Bar
@@ -298,8 +297,7 @@ lg_image_y_position		EQU MINROW
 pt_fade_out_delay		EQU 1	; Tick
 
 ; **** Volume-Meter ****
-vm_source_chan			EQU 0	; Nr. 0..3
-vm_period_div			EQU 30
+vm_period_divider		EQU 30
 vm_max_period_step		EQU 4
 
 ; **** Twisted-Bars ****
@@ -375,6 +373,30 @@ hst_horiz_scroll_blit_y_size	EQU hst_horiz_scroll_window_y_size*hst_horiz_scroll
 
 hst_text_delay			EQU 3*PAL_FPS
 
+; **** Horiz-Scroll-Logo ****
+hsl_x_center			EQU display_window_hstart+((visible_pixels_number-lg_image_x_size)/2)+14
+hsl_x_angle_speed		EQU 4
+
+hsl_start_x_radius		EQU (visible_pixels_number-lg_image_x_size)/2
+hsl_start_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
+hsl_start_x_angle_speed		EQU 1
+
+hsl_stop_x_radius		EQU (visible_pixels_number-lg_image_x_size)/2
+hsl_stop_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
+hsl_stop_x_angle_speed		EQU 1
+
+; **** Colors-Fader-Cross ****
+cfc_rgb8_start_color		EQU 1
+cfc_rgb8_color_table_offset	EQU 0
+cfc_rgb8_colors_number		EQU hst_color_gradient_height
+cfc_rgb8_color_tables_number	EQU 4
+cfc_rgb8_fader_speed_max	EQU 3
+cfc_rgb8_fader_radius		EQU cfc_rgb8_fader_speed_max
+cfc_rgb8_fader_center		EQU cfc_rgb8_fader_speed_max+1
+cfc_rgb8_fader_angle_speed	EQU 1
+cfc_rgb8_fader_delay		EQU 10*PAL_FPS
+cfc_rgb8_colors_per_bank	EQU 32
+
 ; **** Bar-Fader ****
 bf_color_table_offset		EQU 0
 bf_colors_number		EQU ssb_bar_height
@@ -390,18 +412,6 @@ bfo_fader_speed_max		EQU 8
 bfo_fader_radius		EQU bfo_fader_speed_max
 bfo_fader_center		EQU bfo_fader_speed_max+1
 bfo_fader_angle_speed		EQU 2
-
-; **** Horiz-Scroll-Logo ****
-hsl_x_center			EQU display_window_hstart+((visible_pixels_number-lg_image_x_size)/2)+14
-hsl_x_angle_speed		EQU 4
-
-hsl_start_x_radius		EQU (visible_pixels_number-lg_image_x_size)/2
-hsl_start_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
-hsl_start_x_angle_speed	EQU 1
-
-hsl_stop_x_radius		EQU (visible_pixels_number-lg_image_x_size)/2
-hsl_stop_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
-hsl_stop_x_angle_speed	EQU 1
 
 ; **** Scroll-Logo-Bottom ****
 slb_y_radius			EQU visible_lines_number
@@ -428,18 +438,6 @@ ccfo_mode3			EQU 2
 ccfo_mode4			EQU 3
 ccfo_delay_speed		EQU 1
 ccfo_delay			EQU 1
-
-; **** Colors-Fader-Cross ****
-cfc_rgb8_start_color		EQU 1
-cfc_rgb8_color_table_offset	EQU 0
-cfc_rgb8_colors_number		EQU hst_color_gradient_height
-cfc_rgb8_color_tables_number	EQU 4
-cfc_rgb8_fader_speed_max	EQU 3
-cfc_rgb8_fader_radius		EQU cfc_rgb8_fader_speed_max
-cfc_rgb8_fader_center		EQU cfc_rgb8_fader_speed_max+1
-cfc_rgb8_fader_angle_speed	EQU 1
-cfc_rgb8_fader_delay		EQU 10*PAL_FPS
-cfc_rgb8_colors_per_bank	EQU 32
 
 ; **** Main ****
 quit_delay			EQU (hst_origin_character_x_size*(((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1))/hst_horiz_scroll_speed2
@@ -797,17 +795,8 @@ extra_memory_size		RS.B 0
 
 pt_effects_handler_active	RS.W 1
 
-; **** Horiz-Scrolltext ****
-	RS_ALIGN_LONGWORD
-hst_image			RS.L 1
-hst_enabled			RS.W 1
-hst_text_table_start		RS.W 1
-hst_text_BLTCON0_bits		RS.W 1
-hst_character_toggle_image	RS.W 1
-hst_text_y_offset		RS.W 1
-hst_horiz_scroll_speed		RS.W 1
-hst_pause_horiz_scroll_enabled	RS.W 1
-hst_text_delay_counter		RS.W 1
+; **** Volume-Meter ****
+vm_audio_channel		RS.W 1
 
 ; **** Twisted-Bars ****
 tb_y_angle			RS.W 1
@@ -820,6 +809,18 @@ ssb_y_angle			RS.W 1
 sp_stripes_y_angle		RS.W 1
 sp_stripes_y_angle_speed 	RS.W 1
 
+; **** Horiz-Scrolltext ****
+	RS_ALIGN_LONGWORD
+hst_image			RS.L 1
+hst_enabled			RS.W 1
+hst_text_table_start		RS.W 1
+hst_text_BLTCON0_bits		RS.W 1
+hst_character_toggle_image	RS.W 1
+hst_text_y_offset		RS.W 1
+hst_horiz_scroll_speed		RS.W 1
+hst_pause_horiz_scroll_enabled	RS.W 1
+hst_text_delay_counter		RS.W 1
+
 ; **** Horiz-Scroll-Logo ****
 hsl_active			RS.W 1
 hsl_variable_x_radius		RS.W 1
@@ -830,6 +831,14 @@ hsl_start_x_angle		RS.W 1
 
 hsl_stop_active			RS.W 1
 hsl_stop_x_angle		RS.W 1
+
+; **** Colors-Fader-Cross ****
+cfc_rgb8_active			RS.W 1
+cfc_rgb8_fader_angle		RS.W 1
+cfc_rgb8_fader_delay_counter	RS.W 1
+cfc_rgb8_color_table_start	RS.W 1
+cfc_rgb8_colors_counter		RS.W 1
+cfc_rgb8_copy_colors_active	RS.W 1
 
 ; **** Bar-Fader ****
 bf_colors_counter		RS.W 1
@@ -862,14 +871,6 @@ ccfo_active			RS.W 1
 ccfo_current_mode		RS.W 1
 ccfo_start			RS.W 1
 ccfo_delay_counter		RS.W 1
-
-; **** Colors-Fader-Cross ****
-cfc_rgb8_active			RS.W 1
-cfc_rgb8_fader_angle		RS.W 1
-cfc_rgb8_fader_delay_counter	RS.W 1
-cfc_rgb8_color_table_start	RS.W 1
-cfc_rgb8_colors_counter		RS.W 1
-cfc_rgb8_copy_colors_active	RS.W 1
 
 ; **** Main ****
 logo_enabled			RS.W 1
@@ -908,12 +909,27 @@ init_main_variables
 	IFD PROTRACKER_VERSION_2.3A 
 		PT2_INIT_VARIABLES
 	ENDC
+
 	IFD PROTRACKER_VERSION_3.0B
 		PT3_INIT_VARIABLES
 	ENDC
 
 	moveq	#TRUE,d0
 	move.w	d0,pt_effects_handler_active(a3)
+
+; **** Volume-Meter ****
+	move.w	d0,vm_audio_channel(a3)
+
+; **** Twisted-Bars ****
+	move.w	d0,tb_y_angle(a3)	; 0 Grad
+	move.w	d0,tb_y_angle_step_angle(a3) ; 0 Grad
+
+; **** Sine-Striped-Bar ****
+	move.w	d0,ssb_y_angle(a3)	; 0 Grad
+
+; **** Stripes-Pattern ****
+	move.w	d0,sp_stripes_y_angle(a3) ; 0 Grad
+	move.w	#sp_stripes_y_angle_speed1,sp_stripes_y_angle_speed(a3)
 
 ; **** Horiz-Scrolltext ****
 	lea	hst_image_data,a0
@@ -929,17 +945,6 @@ init_main_variables
 	move.w	d1,hst_pause_horiz_scroll_enabled(a3)
 	move.w	d1,hst_text_delay_counter(a3)
 
-; **** Twisted-Bars ****
-	move.w	d0,tb_y_angle(a3)	; 0 Grad
-	move.w	d0,tb_y_angle_step_angle(a3) ; 0 Grad
-
-; **** Sine-Striped-Bar ****
-	move.w	d0,ssb_y_angle(a3)	; 0 Grad
-
-; **** Stripes-Pattern ****
-	move.w	d0,sp_stripes_y_angle(a3) ; 0 Grad
-	move.w	#sp_stripes_y_angle_speed1,sp_stripes_y_angle_speed(a3)
-
 ; **** Horiz-Scroll-Logo ****
 	move.w	d1,hsl_active(a3)
 	move.w	d0,hsl_variable_x_radius(a3)
@@ -952,6 +957,20 @@ init_main_variables
 	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180 Grad
 
 	move.w	d1,hst_text_delay_counter(a3) ; Zähler inaktiv
+
+; **** Colors-Fader-Cross ****
+	IFEQ cfc_rgb8_prefade_enabled
+		move.w	d0,cfc_rgb8_active(a3)
+		move.w	#cfc_rgb8_colors_number*3,cfc_rgb8_colors_counter(a3)
+		move.w	d0,cfc_rgb8_copy_colors_active(a3)
+	ELSE
+		move.w	d1,cfc_rgb8_active(a3)
+		move.w	d0,cfc_rgb8_colors_counter(a3)
+		move.w	d1,cfc_rgb8_copy_colors_active(a3)
+	ENDC
+	move.w	#sine_table_length/4,cfc_rgb8_fader_angle(a3) ; 90 Grad
+	move.w	d1,cfc_rgb8_fader_delay_counter(a3)
+	move.w	d0,cfc_rgb8_color_table_start(a3)
 
 ; **** Bar-Fader ****
 	move.w	d0,bf_colors_counter(a3)
@@ -985,20 +1004,6 @@ init_main_variables
 	move.w	#ccfo_mode1,ccfo_current_mode(a3)
 	move.w	d0,ccfo_start(a3)
 	move.w	d0,ccfo_delay_counter(a3)
-
-; **** Colors-Fader-Cross ****
-	IFEQ cfc_rgb8_prefade_enabled
-		move.w	d0,cfc_rgb8_active(a3)
-		move.w	#cfc_rgb8_colors_number*3,cfc_rgb8_colors_counter(a3)
-		move.w	d0,cfc_rgb8_copy_colors_active(a3)
-	ELSE
-		move.w	d1,cfc_rgb8_active(a3)
-		move.w	d0,cfc_rgb8_colors_counter(a3)
-		move.w	d1,cfc_rgb8_copy_colors_active(a3)
-	ENDC
-	move.w	#sine_table_length/4,cfc_rgb8_fader_angle(a3) ; 90 Grad
-	move.w	d1,cfc_rgb8_fader_delay_counter(a3)
-	move.w	d0,cfc_rgb8_color_table_start(a3)
 
 ; **** Main ****
 	move.w	d1,logo_enabled(a3)
@@ -1401,7 +1406,7 @@ cl2_update_bpl1dat_loop
 
 	CNOP 0,4
 get_channels_amplitudes
-	moveq	#vm_period_div,d2
+	moveq	#vm_period_divider,d2
 	lea	pt_audchan1temp(pc),a0
 	lea	vm_audio_channel1_info(pc),a1
 	bsr.s	get_channel_amplitude
@@ -1441,7 +1446,7 @@ get_channel_amplitude_quit
 	CNOP 0,4
 tb_get_yz_coords
 	move.l	a4,-(a7)
-	moveq	#vm_source_chan,d1
+	move.w	vm_audio_channel(a3),d1
 	MULUF.W audio_channel_info_size/WORD_SIZE,d1,d0
 	moveq	#tb_y_distance,d3
 	move.w	tb_y_angle(a3),d4	; 1. Y-Winkel
@@ -2374,22 +2379,25 @@ pt_effects_handler
 	tst.w	pt_effects_handler_active(a3)
 	bne.s	pt_effects_handler_quit
 	move.b	n_cmdlo(a2),d0
-	cmp.b	#$10,d0
+	lsr.b	#4,d0
+	cmp.b	#$1,d0
 	beq.s	pt_start_bar_fader_in
-	cmp.b	#$20,d0
+	cmp.b	#$2,d0
 	beq.s	pt_start_scrolltext
-	cmp.b	#$30,d0
+	cmp.b	#$3,d0
 	beq.s	pt_start_scroll_logo_bottom_in
-	cmp.b	#$40,d0
+	cmp.b	#$4,d0
 	beq.s	pt_start_chunky_columns_fader_in
-	cmp.b	#$50,d0
+	cmp.b	#$5,d0
 	beq.s	pt_toggle_stripes_y_movement
-	cmp.b	#$60,d0
+	cmp.b	#$6,d0
 	beq.s	pt_start_horiz_logo_scroll
-	cmp.b	#$61,d0
+	cmp.b	#$7,d0
 	beq.s	pt_stop_horiz_logo_scroll
-	cmp.b	#$70,d0
+	cmp.b	#$8,d0
 	beq.s	pt_restart_scrolltext
+	cmp.b	#$9,d0
+	beq.s	pt_select_channel
 pt_effects_handler_quit
 	rts
 	CNOP 0,4
@@ -2430,6 +2438,12 @@ pt_stop_horiz_logo_scroll
 pt_restart_scrolltext
 	clr.w	hst_enabled(a3)
 	move.w	#hst_restart_text-hst_text,hst_text_table_start(a3) ; Countdown-Text überspringen
+	rts
+	CNOP 0,4
+pt_select_channel
+	moveq	#NIBBLE_MASK_LOW,d0
+	and.b	n_cmdlo(a2),d0
+        move.w	d0,vm_audio_channel(a3)
 	rts
 
 	CNOP 0,4
