@@ -2326,9 +2326,9 @@ mh_exit_demo
 	clr.w	hsl_stop_active(a3)
 	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180°
 mh_exit_demo_skip1
-	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3) ; scrolltext double speed
+	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3) ; scroll text double speed
 	move.w	#hst_stop_text-hst_text,hst_text_table_start(a3) ; no characters
-	clr.w	quit_active(a3)		; stop intro after scrolltext stop
+	clr.w	quit_active(a3)		; stop intro after scroll text stop
 	bra.s	mh_exit_demo_quit
 	CNOP 0,4
 mh_exit_demo_skip2
