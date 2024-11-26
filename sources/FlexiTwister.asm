@@ -58,6 +58,7 @@
 ; - new Fx command 89n to select the audio channel (n=0..3) for the twister
 ; - scroll text now starts earlier together with the music
 ; - fx commands in module changed
+; - code optimized
 
 
 ; PT 8xy command
@@ -1288,10 +1289,10 @@ set_playfield1
 set_playfield1_loop
 	move.l	(a1)+,d0
 	add.l	d1,d0			; bitplane offset
-	move.w	d0,4(a0)		; BPLxPTL
+	move.w	d0,LONGWORD_SIZE(a0)	; BPLxPTL
 	swap	d0
 	move.w	d0,(a0)			; BPLxPTH
-	addq.w	#8,a0
+	addq.w	#QUADWORD_SIZE,a0
 	dbf	d7,set_playfield1_loop
 	rts
 
@@ -1783,7 +1784,7 @@ hst_pause_scrolltext
 	CNOP 0,4
 hst_stop_scrolltext
 	move.w	#FALSE,hst_enabled(a3)	; stop text
-	tst.w	quit_active(a3)		; quit intro ?
+	tst.w	quit_active(a3)
 	bne.s	hst_stop_scrolltext_quit
 	clr.w	pt_music_fader_active(a3)
 	tst.w	logo_enabled(a3)
@@ -1908,21 +1909,19 @@ bf_convert_colors
 	lea	bf_colors_number*QUADWORD_SIZE(a2),a4 ; end of color table
 	MOVEF.W (bf_colors_number/2)-1,d7
 bf_convert_colors_loop
-; helle Streifen
-	move.l	(a0)+,d0		; RGB8 value
+	move.l	(a0)+,d0		; RGB8 value bright stripes
 	move.l	d0,d2		
 	RGB8_TO_RGB4_HIGH d0,d1,d5
 	move.w	d0,(a2)+		; COLORxx high bits
 	RGB8_TO_RGB4_LOW d2,d1,d5
 	move.w	d2,(a2)+		; COLORxx low bits
-; dunkle Streifen
-	move.l	(a1)+,d3		; RGB8 value
+	move.l	(a1)+,d3		; RGB8 value dark stripes
 	move.l	d3,d4		
 	RGB8_TO_RGB4_HIGH d3,d1,d5
 	move.w	d3,(a2)+		; COLORxx high bits
 	RGB8_TO_RGB4_LOW d4,d1,d5
 	move.w	d4,(a2)+		; COLORxx low bits
-; 2. Hälfte der Bar rückwärts
+; 2nd part of bar backwards
 	move.w	d4,-(a4)		; COLORxx low bits
 	move.w	d3,-(a4)		; COLORxx high bits
 	move.w	d2,-(a4)		; COLORxx low bits
@@ -2295,7 +2294,7 @@ control_counters_skip4
 	clr.w	slbo_active(a3)
 control_counters_skip5
 	clr.w	ccfo_active(a3)
-	move.w	#1,ccfo_delay_counter(a3) ; deactivate counter
+	move.w	#1,ccfo_delay_counter(a3) ; activate counter
 	tst.w	ccfi_active(a3)
 	bne.s	control_counters_skip6
 	move.w	#FALSE,ccfi_active(a3)
@@ -2415,7 +2414,7 @@ pt_start_scroll_logo_bottom_in
 	CNOP 0,4
 pt_start_chunky_columns_fader_in
 	clr.w	ccfi_active(a3)
-	move.w	#1,ccfi_delay_counter(a3) ; deactivate delay counter
+	move.w	#1,ccfi_delay_counter(a3) ; activate delay counter
 	rts
 	CNOP 0,4
 pt_toggle_stripes_y_movement
@@ -2643,8 +2642,8 @@ hst_stop_text
 
 	DC.B "$VER: "
 	DC.B "RSE-FlexiTwister "
-	DC.B "1.7 beta "
-	DC.B "(17.11.24)"
+	DC.B "1.8 beta "
+	DC.B "(25.11.24)"
 	DC.B "© 2024 by Resistance",0
 	EVEN
 
