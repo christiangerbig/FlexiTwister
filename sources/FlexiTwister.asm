@@ -83,7 +83,7 @@
 ; COLOR01: 3 x 16 = 48 colors: bars, sprites (2nd color bank)
 ; COLOR01: 1 x 16 = 16 colors: color gradient scroll text centered
 
-; Execution time 68020: ? raster lines
+; execution time 68020: ? raster lines
 
 
 	SECTION code_and_variables,CODE
@@ -243,7 +243,7 @@ ciab_ta_continuous_enabled	EQU FALSE
 	ENDC
 ciab_tb_continuous_enabled	EQU FALSE
 
-beam_position			EQU $133 ; Wegen Module-Fader
+beam_position			EQU $133
 
 pixel_per_line			EQU 336
 visible_pixels_number		EQU 352
