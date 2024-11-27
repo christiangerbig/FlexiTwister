@@ -60,6 +60,12 @@
 ; - fx commands in module changed
 ; - code optimized
 
+; V.1.9 beta
+; - font color gradient improved
+; - text for scroll text changed
+; - twister movement improved
+; - scrolltext end speed increased
+
 
 ; PT 8xy command
 ; 810	start Bar-Fader-In
@@ -300,7 +306,7 @@ pt_fade_out_delay		EQU 1	; Tick
 
 ; Volume-Meter
 vm_period_divider		EQU 30
-vm_max_period_step		EQU 4
+vm_max_period_step		EQU 2
 
 ; Twisted-Bars
 tb_bars_number			EQU 3
@@ -356,7 +362,7 @@ hst_horiz_scroll_window_width	EQU hst_horiz_scroll_window_x_size/8
 hst_horiz_scroll_window_y_size 	EQU hst_text_character_y_size
 hst_horiz_scroll_window_depth	EQU hst_image_depth
 hst_horiz_scroll_speed1		EQU 2
-hst_horiz_scroll_speed2		EQU 6
+hst_horiz_scroll_speed2		EQU 8
 
 hst_text_character_x_restart	EQU hst_horiz_scroll_window_x_size
 hst_text_characters_number	EQU hst_horiz_scroll_window_x_size/hst_text_character_x_size
@@ -2570,10 +2576,10 @@ ccf_columns_mask
 		DC.B FALSE
 	ENDR
 
-; Color-Fader-Cross
+; Color-Fader-Cross / Horiz-Scrolltext
 	CNOP 0,4
 cfc_rgb8_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient5.ct"
+	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient6.ct"
 
 
 	INCLUDE "sys-variables.i"
@@ -2590,47 +2596,34 @@ hst_text
 	REPT hst_text_characters_number/(hst_origin_character_x_size/hst_text_character_x_size)
 		DC.B " "
 	ENDR
-	DC.B " 3             2              1                            "
+	DC.B " 3              2               1                            "
 hst_restart_text
-	DC.B " RESISTANCE PRESENTS THEIR CONTRIBUTION TO        GERP 2025      ",ASCII_CTRL_P,"   >FLEXI TWISTER<   ",ASCII_CTRL_P,"          "
+	DC.B " RESISTANCE PRESENTS THEIR CONTRIBUTION TO                  GERP 2025      ",ASCII_CTRL_P
+	DC.B "                CALLED                   *FLEXI TWISTER*   ",ASCII_CTRL_P," "
 
-	DC.B "AGA POWER WITH A 8 SPRITES-LOGO IN OVERSCAN!!!           "
+	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
+		DC.B " "
+	ENDR
+
+	DC.B "THE GREETINGS    ",ASCII_CTRL_P,"               "
+	DC.B "*TO ALL ON GERP 2025*                     "
+	DC.B "*DESIRE*                     "
+	DC.B "*EPHIDRENA*                     "
+	DC.B "*FOCUS DESIGN*                     "
+	DC.B "*GHOSTOWN*                     "
+	DC.B "*NAH-KOLOR*                     "
+	DC.B "*PLANET JAZZ*                     "
+	DC.B "*SOFTWARE FAILURE*                     "
+	DC.B "*THE ELECTRONIC NIGHTS*                     "
+	DC.B "*WANTED TEAM*                     "
 
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
 		DC.B " "
 	ENDR
 
-	DC.B "GREETINGS      ",ASCII_CTRL_P,"         "
-	DC.B ">TO ALL ON GERP 2025<         "
-	DC.B ">DESIRE<         "
-	DC.B ">EPHIDRENA<         "
-	DC.B ">FOCUS DESIGN<         "
-	DC.B ">GHOSTOWN<         "
-	DC.B ">NAH-KOLOR<         "
-	DC.B ">PLANET JAZZ<         "
-	DC.B ">SOFTWARE FAILURE<         "
-	DC.B ">TEK<         "
-	DC.B ">WANTED TEAM<         "
-
-	DC.B "         "
-	DC.B "CREDITS       ",ASCII_CTRL_P,"       "
-	DC.B "CODING AND MUSIC       DISSIDENT      ",ASCII_CTRL_P,"    "
-	DC.B "GRAPHICS          OPTIC        ",ASCII_CTRL_P,"           "
-
-	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B " "
-	ENDR
-	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "*"
-	ENDR
-	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "*"
-	ENDR
-	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
-		DC.B "*"
-	ENDR
-
-	DC.B "SEE YOU IN ANOTHER PRODUCTION..."
+	DC.B "THE CREDITS     ",ASCII_CTRL_P,"                     "
+	DC.B "CODING AND MUSIC                     >DISSIDENT<     ",ASCII_CTRL_P,"                     "
+	DC.B "GRAPHICS                     >OPTIC<       ",ASCII_CTRL_P,"           "
 hst_stop_text
 	REPT ((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1
 		DC.B " "
@@ -2643,7 +2636,7 @@ hst_stop_text
 	DC.B "$VER: "
 	DC.B "RSE-FlexiTwister "
 	DC.B "1.8 beta "
-	DC.B "(25.11.24)"
+	DC.B "(25.11.24) "
 	DC.B "© 2024 by Resistance",0
 	EVEN
 
