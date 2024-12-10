@@ -1099,10 +1099,10 @@ tb_init_color_table_loop
 	dbf	d7,tb_init_color_table_loop
 	rts
 
-	INIT_MIRROR_bplam_table.B tb,0,2,segments_number1,color_values_number1,extra_memory,a3
+	INIT_MIRROR_BPLAM_TABLE.B tb,0,2,segments_number1,color_values_number1,extra_memory,a3
 
 ; Sine-Striped-Bar / Horiz-Scrolltext
-	INIT_bplam_table.B ssb,color_values_number1*segments_number1*2,2,color_values_number2*2,extra_memory,a3,em_bplam_table2
+	INIT_BPLAM_TABLE.B ssb,color_values_number1*segments_number1*2,2,color_values_number2*2,extra_memory,a3,em_bplam_table2
 
 ; Horiz-Scrolltext
 	INIT_CHARACTERS_OFFSETS.W hst
@@ -1525,7 +1525,7 @@ tb_set_background_bars
 	lea	tb_yz_coords(pc),a0
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
-	move.l	extra_memory(a3),a5	; pointer BPLCON4 switch values table
+	move.l	extra_memory(a3),a5	; pointer BPLAM table
 	lea	ccf_columns_mask(pc),a6
 	moveq	#(cl2_display_width-1)-1,d7
 tb_set_background_bars_loop1
@@ -1535,7 +1535,7 @@ tb_set_background_bars_loop1
 	bra	tb_set_background_bars_skip4
 	CNOP 0,4
 tb_set_background_bars_skip1
-	move.l	a5,a1			; pointer BPLCON4 switch values table
+	move.l	a5,a1			; pointer BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_background_bars_loop2
 	move.l	(a0)+,d0		; bits 0-15: y position, bits 16-31: z vector
@@ -1578,10 +1578,10 @@ make_striped_bar
 	move.w	#cl2_extension1_size,a2
 	moveq	#(ssb_bar_height)-1,d7
 make_striped_bar_loop
-	move.b	(a0)+,d0		; BPLCON4 switch value
-	move.b	d0,(a1)			; first column in cl
-	move.b	d0,4(a1)		; second column in cl
-	move.b	d0,8(a1)		; ...
+	move.b	(a0)+,d0		; BPLAM value
+	move.b	d0,(a1)			; BPLCON4 high
+	move.b	d0,4(a1)
+	move.b	d0,8(a1)
 	move.b	d0,12(a1)
 	move.b	d0,16(a1)
 	move.b	d0,20(a1)
@@ -1634,7 +1634,7 @@ tb_set_foreground_bars
 	lea	tb_yz_coords(pc),a0
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
-	move.l	extra_memory(a3),a5	; pointer BPLCON4 switch values table
+	move.l	extra_memory(a3),a5	; pointer BPLAM table
 	lea	ccf_columns_mask(pc),a6
 	moveq	#(cl2_display_width-1)-1,d7
 tb_set_foreground_bars_loop1
@@ -1644,7 +1644,7 @@ tb_set_foreground_bars_loop1
 	bra	tb_set_foreground_bars_skip4
 	CNOP 0,4
 tb_set_foreground_bars_skip1
-	move.l	a5,a1			; pointer BPLCON4 switch values table
+	move.l	a5,a1			; pointer BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_foreground_bars_loop2
 	move.l	(a0)+,d0		; bits 0-15: y positions, bits 16-31: z vector
