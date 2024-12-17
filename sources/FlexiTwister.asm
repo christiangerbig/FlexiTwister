@@ -61,10 +61,16 @@
 ; - code optimized
 
 ; V.1.9 beta
-; - font color gradient improved
-; - text for scroll text changed
+; - font color gradients improved and reduced to two different gradients
+; - text for scroll text changed and updated
 ; - twister movement improved
 ; - scrolltext end speed increased
+; - Grass´font included
+
+; (V.1.0
+; - adf-version
+; - wb-start considered
+; - luNix nfo file included)
 
 
 ; PT 8xy command
@@ -398,8 +404,8 @@ hsl_stop_x_angle_speed		EQU 1
 cfc_rgb8_start_color		EQU 1
 cfc_rgb8_color_table_offset	EQU 0
 cfc_rgb8_colors_number		EQU hst_color_gradient_height
-cfc_rgb8_color_tables_number	EQU 4
-cfc_rgb8_fader_speed_max	EQU 3
+cfc_rgb8_color_tables_number	EQU 2
+cfc_rgb8_fader_speed_max	EQU 4
 cfc_rgb8_fader_radius		EQU cfc_rgb8_fader_speed_max
 cfc_rgb8_fader_center		EQU cfc_rgb8_fader_speed_max+1
 cfc_rgb8_fader_angle_speed	EQU 1
@@ -2538,7 +2544,7 @@ sp_color_offsets_table
 
 ; Horiz-Scrolltext
 hst_ascii
-	DC.B "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!?-'():\/#*>< "
+	DC.B "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!?-'():\/#*<> "
 hst_ascii_end
 	EVEN
 
@@ -2580,7 +2586,7 @@ ccf_columns_mask
 ; Color-Fader-Cross / Horiz-Scrolltext
 	CNOP 0,4
 cfc_rgb8_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient6.ct"
+	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient8.ct"
 
 
 	INCLUDE "sys-variables.i"
@@ -2607,7 +2613,6 @@ hst_restart_text
 	ENDR
 
 	DC.B "THE GREETINGS    ",ASCII_CTRL_P,"               "
-	DC.B "*TO ALL ON GERP 2025*                     "
 	DC.B "*DESIRE*                     "
 	DC.B "*EPHIDRENA*                     "
 	DC.B "*FOCUS DESIGN*                     "
@@ -2615,7 +2620,7 @@ hst_restart_text
 	DC.B "*NAH-KOLOR*                     "
 	DC.B "*PLANET JAZZ*                     "
 	DC.B "*SOFTWARE FAILURE*                     "
-	DC.B "*THE ELECTRONIC NIGHTS*                     "
+	DC.B "*TEK*                     "
 	DC.B "*WANTED TEAM*                     "
 
 	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
@@ -2623,8 +2628,9 @@ hst_restart_text
 	ENDR
 
 	DC.B "THE CREDITS     ",ASCII_CTRL_P,"                     "
-	DC.B "CODING AND MUSIC                     >DISSIDENT<     ",ASCII_CTRL_P,"                     "
-	DC.B "GRAPHICS                     >OPTIC<       ",ASCII_CTRL_P,"           "
+	DC.B "CODING AND MUSIC                      >DISSIDENT<     ",ASCII_CTRL_P,"                     "
+	DC.B "GRAPHICS                      >OPTIC<       ",ASCII_CTRL_P,"             AND"
+	DC.B "                      >GRASS<       ",ASCII_CTRL_P,"           "
 hst_stop_text
 	REPT ((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1
 		DC.B " "
@@ -2636,8 +2642,8 @@ hst_stop_text
 
 	DC.B "$VER: "
 	DC.B "RSE-FlexiTwister "
-	DC.B "1.8 beta "
-	DC.B "(25.11.24) "
+	DC.B "1.9 beta "
+	DC.B "(17.12.24) "
 	DC.B "© 2024 by Resistance",0
 	EVEN
 
