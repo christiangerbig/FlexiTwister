@@ -80,7 +80,11 @@
 ; - color tables optimized
 
 ; V.1.2
-; - Twister movement speed reduced
+; - twister movement speed reduced
+
+; V.1.3
+; - font colors changed
+; - module improved
 
 
 ; PT 8xy command
@@ -2659,8 +2663,8 @@ hst_stop_text
 
 	DC.B "$VER: "
 	DC.B "RSE-FlexiTwister "
-	DC.B "1.2 "
-	DC.B "(21.12.24) "
+	DC.B "1.3 "
+	DC.B "(22.12.24) "
 	DC.B "© 2024/2025 by Resistance",0
 	EVEN
 
