@@ -103,7 +103,7 @@
 ; COLOR01: 3 x 16 = 48 colors: bars, sprites (2nd color bank)
 ; COLOR01: 1 x 16 = 16 colors: color gradient scroll text centered
 
-; execution time 68020: 302 raster lines
+; execution time 68020: 264 raster lines
 
 
 	SECTION code_and_variables,CODE
