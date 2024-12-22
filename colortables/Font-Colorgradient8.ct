@@ -1,9 +1,0 @@
-
-		dc.l	$00565e97,$005d629e,$006467a5,$006c6cac
-		dc.l	$007573b2,$007f7ab9,$008a82c0,$00948ac7
-		dc.l	$009f92ce,$00a89cd5,$00b4a5dc,$00bfaee3
-		dc.l	$00c9b7e9,$00d3c1f0,$00ddcbf7,$00ebd8ff
-		dc.l	$00974b17,$009e5320,$00a55a28,$00ac6432
-		dc.l	$00b26b3c,$00b97447,$00c07f52,$00c7875e
-		dc.l	$00ce946b,$00d59f78,$00dcaa85,$00e3b694
-		dc.l	$00e9c0a2,$00f0cdb2,$00f7d8c2,$00ffe8d6

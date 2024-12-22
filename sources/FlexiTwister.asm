@@ -67,10 +67,20 @@
 ; - scrolltext end speed increased
 ; - Grass´font included
 
-; (V.1.0
+; V.1.0
 ; - adf-version
 ; - wb-start considered
-; - luNix nfo file included)
+; - screen fader enabled
+; - font color gradients changed (brighter)
+; - luNix nfo file included
+
+; V.1.1
+; - striped bar bouncing slowed down
+; - stripes movement slowed down
+; - color tables optimized
+
+; V.1.2
+; - Twister movement speed reduced
 
 
 ; PT 8xy command
@@ -89,7 +99,7 @@
 ; COLOR01: 3 x 16 = 48 colors: bars, sprites (2nd color bank)
 ; COLOR01: 1 x 16 = 16 colors: color gradient scroll text centered
 
-; execution time 68020: ? raster lines
+; execution time 68020: 302 raster lines
 
 
 	SECTION code_and_variables,CODE
@@ -141,8 +151,8 @@ requires_060_cpu		EQU FALSE
 requires_fast_memory		EQU FALSE
 requires_multiscan_monitor	EQU FALSE
 
-workbench_start_enabled		EQU FALSE
-screen_fader_enabled		EQU FALSE
+workbench_start_enabled		EQU TRUE
+screen_fader_enabled		EQU TRUE
 text_output_enabled		EQU FALSE
 
 open_border_enabled		EQU TRUE
@@ -297,6 +307,7 @@ cl2_hstart2			EQU $00
 cl2_vstart2			EQU beam_position&$ff
 
 sine_table_length		EQU 256
+sine_table_length2		EQU 512
 
 ; Logo
 lg_image_x_size			EQU 256
@@ -312,8 +323,8 @@ lg_image_y_position		EQU MINROW
 pt_fade_out_delay		EQU 1	; Tick
 
 ; Volume-Meter
-vm_period_divider		EQU 30
-vm_max_period_step		EQU 2
+vm_period_divider		EQU 48
+vm_max_period_step		EQU 1
 
 ; Twisted-Bars
 tb_bars_number			EQU 3
@@ -350,7 +361,7 @@ sp_stripes_y_center		EQU ssb_bar_height/2
 sp_stripes_y_angle_step		EQU 1
 sp_stripes_y_angle_speed1	EQU 1
 sp_stripes_number		EQU 16
-sp_stripe_height		EQU 8
+sp_stripe_height		EQU 16
 
 ; Horiz-Scrolltext
 hst_image_x_size		EQU 320
@@ -1504,15 +1515,15 @@ tb_get_yz_coords_loop2
 sp_get_stripes_y_coords
 	move.w	sp_stripes_y_angle(a3),d2
 	move.w	d2,d0
-	MOVEF.W (sine_table_length/2)-1,d5 ; overflow
+	MOVEF.W (sine_table_length2/2)-1,d5 ; overflow
 	add.w	sp_stripes_y_angle_speed(a3),d0 ; next y angle
 	and.w	d5,d0			; remove overflow
 	move.w	d0,sp_stripes_y_angle(a3) 
 	;moveq	#sp_stripes_y_radius*2,d3
 	moveq	#sp_stripes_y_center,d4
-	lea	sine_table+((sine_table_length/4)*LONGWORD_SIZE)(pc),a0 
+	lea	sine_table2+((sine_table_length2/4)*LONGWORD_SIZE)(pc),a0
 	lea	sp_stripes_y_coords(pc),a1
-	moveq	#(sp_stripes_number*sp_stripe_height)-1,d7 ; number of lines
+	MOVEF.W	(sp_stripes_number*sp_stripe_height)-1,d7 ; number of lines
 sp_get_stripes_y_coords_loop
 	move.l	(a0,d2.w*4),d0		; cos(w)
 	MULUF.L SP_stripes_y_radius*2,d0,d1 ; y'=(yr*cos(w))/2^15
@@ -1565,9 +1576,9 @@ make_striped_bar
 	move.w	ssb_y_angle(a3),d1
 	move.w	d1,d0		
 	addq.w	#ssb_y_angle_speed,d0	; next y angle
-	and.w	#(sine_table_length/2)-1,d0 ; remove overflow
+	and.w	#(sine_table_length2/2)-1,d0 ; remove overflow
 	move.w	d0,ssb_y_angle(a3) 
-	lea	sine_table(pc),a0	
+	lea	sine_table2(pc),a0
 	move.l	(a0,d1.w*4),d0		; sin(w)
 	MULUF.L ssb_y_radius*2,d0,d1	; y'=(yr*sin(w))/2^15
 	swap	d0
@@ -2488,6 +2499,12 @@ spr_ptrs_display
 sine_table
 	INCLUDE "sine-table-256x32.i"
 
+
+	CNOP 0,4
+sine_table2
+	INCLUDE "sine-table-512x32.i"
+
+
 ; PT-Replay
 	INCLUDE "music-tracker/pt-invert-table.i"
 
@@ -2527,7 +2544,7 @@ vm_audio_channel4_info
 ; Twisted-Bars
 	CNOP 0,4
 tb_colorfradients
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Bars-Colorgradient3.ct"
+	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Bars-Colorgradient.ct"
 
 	CNOP 0,4
 tb_yz_coords
@@ -2563,7 +2580,7 @@ hst_characters_image_ptrs
 ; Bar-Fader
 	CNOP 0,4
 bfi_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Striped-Bar-Colorgradient3.ct"
+	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Striped-Bar-Colorgradient.ct"
 
 	CNOP 0,4
 bfo_color_table
@@ -2586,7 +2603,7 @@ ccf_columns_mask
 ; Color-Fader-Cross / Horiz-Scrolltext
 	CNOP 0,4
 cfc_rgb8_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient8.ct"
+	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient.ct"
 
 
 	INCLUDE "sys-variables.i"
@@ -2642,9 +2659,9 @@ hst_stop_text
 
 	DC.B "$VER: "
 	DC.B "RSE-FlexiTwister "
-	DC.B "1.9 beta "
-	DC.B "(17.12.24) "
-	DC.B "© 2024 by Resistance",0
+	DC.B "1.2 "
+	DC.B "(21.12.24) "
+	DC.B "© 2024/2025 by Resistance",0
 	EVEN
 
 
