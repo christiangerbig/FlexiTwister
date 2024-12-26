@@ -88,6 +88,9 @@
 
 ; V.1.4
 ; - text changed
+; - logo movement slowed down
+; - logo stops with two different velocities (on exit and per 8xx command)
+; - module: cymbal volume reduced
 
 
 ; PT 8xy command
@@ -165,7 +168,6 @@ text_output_enabled		EQU FALSE
 open_border_enabled		EQU TRUE
 
 pt_ciatiming_enabled		EQU TRUE
-pt_finetune_enabled		EQU FALSE
 pt_metronome_enabled		EQU FALSE
 pt_mute_enabled			EQU FALSE
 pt_track_notes_played_enabled	EQU TRUE
@@ -314,7 +316,7 @@ cl2_vstart1			EQU MINROW
 cl2_hstart2			EQU $00
 cl2_vstart2			EQU beam_position&$ff
 
-sine_table_length		EQU 256
+sine_table_length1		EQU 256
 sine_table_length2		EQU 512
 
 ; Logo
@@ -342,7 +344,7 @@ tb_y_centre			EQU (cl2_display_y_size-tb_bar_height)/2
 tb_y_angle_step_radius		EQU 6
 tb_y_angle_step_centre		EQU 3
 tb_y_angle_step_step		EQU 1
-tb_y_distance			EQU sine_table_length/tb_bars_number
+tb_y_distance			EQU sine_table_length1/tb_bars_number
 
 ; Clear-Blit
 tb_clear_blit_x_size		EQU 16
@@ -409,7 +411,7 @@ hst_text_delay			EQU 3*PAL_FPS
 
 ; Horiz-Scroll-Logo
 hsl_x_center			EQU display_window_hstart+((visible_pixels_number-lg_image_x_size)/2)+14
-hsl_x_angle_speed		EQU 4
+hsl_x_angle_speed		EQU 5
 
 hsl_start_x_radius		EQU (visible_pixels_number-lg_image_x_size)/2
 hsl_start_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
@@ -417,7 +419,8 @@ hsl_start_x_angle_speed		EQU 1
 
 hsl_stop_x_radius		EQU (visible_pixels_number-lg_image_x_size)/2
 hsl_stop_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
-hsl_stop_x_angle_speed		EQU 1
+hsl_stop_x_angle_speed1		EQU 1
+hsl_stop_x_angle_speed2		EQU 3
 
 ; Colors-Fader-Cross
 cfc_rgb8_start_color		EQU 1
@@ -863,6 +866,7 @@ hsl_start_x_angle		RS.W 1
 
 hsl_stop_active			RS.W 1
 hsl_stop_x_angle		RS.W 1
+hsl_stop_x_angle_speed		RS.W 1
 
 ; Colors-Fader-Cross
 cfc_rgb8_active			RS.W 1
@@ -973,7 +977,7 @@ init_main_variables
 	moveq	#hst_horiz_scroll_speed1,d2
 	move.w	d2,hst_horiz_scroll_speed(a3)
 	move.w	d1,hst_pause_horiz_scroll_enabled(a3)
-	move.w	d1,hst_text_delay_counter(a3)
+	move.w	d1,hst_text_delay_counter(a3) ; delay counter inactive
 
 ; Horiz-Scroll-Logo
 	move.w	d1,hsl_active(a3)
@@ -981,12 +985,11 @@ init_main_variables
 	move.w	d0,hsl_x_angle(a3) ;0°
 
 	move.w	d1,hsl_start_active(a3)
-	move.w	#sine_table_length/4,hsl_start_x_angle(a3) ; 90°
+	move.w	#sine_table_length2/4,hsl_start_x_angle(a3) ; 90°
 
 	move.w	d1,hsl_stop_active(a3)
-	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180°
-
-	move.w	d1,hst_text_delay_counter(a3) ; delay counter inactive
+	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
+	move.w	d0,hsl_stop_x_angle_speed(a3)
 
 ; Colors-Fader-Cross
 	IFEQ cfc_rgb8_prefade_enabled
@@ -998,7 +1001,7 @@ init_main_variables
 		move.w	d0,cfc_rgb8_colors_counter(a3)
 		move.w	d1,cfc_rgb8_copy_colors_active(a3)
 	ENDC
-	move.w	#sine_table_length/4,cfc_rgb8_fader_angle(a3) ; 90°
+	move.w	#sine_table_length1/4,cfc_rgb8_fader_angle(a3) ; 90°
 	move.w	d1,cfc_rgb8_fader_delay_counter(a3)
 	move.w	d0,cfc_rgb8_color_table_start(a3)
 
@@ -1008,12 +1011,12 @@ init_main_variables
 
 ; Bar-Fader-In
 	move.w	d1,bfi_active(a3)
-	moveq	#sine_table_length/4,d2
-	move.w	#sine_table_length/4,bfi_fader_angle(a3) ; 90°
+	moveq	#sine_table_length1/4,d2
+	move.w	#sine_table_length1/4,bfi_fader_angle(a3) ; 90°
 
 ; Bar-Fader-Out
 	move.w	d1,bfo_active(a3)
-	move.w	#sine_table_length/4,bfo_fader_angle(a3) ; 90°
+	move.w	#sine_table_length1/4,bfo_fader_angle(a3) ; 90°
 
 ; Scroll-Logo-Bottom-In
 	move.w	d1,slbi_active(a3)
@@ -1021,7 +1024,7 @@ init_main_variables
 
 ; Scroll-Logo-Bottom-Out
 	move.w	d1,slbo_active(a3)
-	move.w	#sine_table_length/4,slbo_y_angle(a3) ; 90°
+	move.w	#sine_table_length1/4,slbo_y_angle(a3) ; 90°
 
 ; Chunky-Columns-Fader-In
 	move.w	d1,ccfi_active(a3)
@@ -1049,9 +1052,7 @@ init_main
 	bsr	pt_InitRegisters
 	bsr	pt_InitAudTempStrucs
 	bsr	pt_ExamineSongStruc
-	IFEQ pt_finetune_enabled
-		bsr	pt_InitFtuPeriodTableStarts
-	ENDC
+	bsr	pt_InitFtuPeriodTableStarts
 	bsr	vm_init_audio_channel_info
 	bsr	tb_init_color_table
 	bsr	ssb_init_color_table
@@ -1076,9 +1077,7 @@ init_main
 
 	PT_EXAMINE_SONG_STRUCTURE
 
-	IFEQ pt_finetune_enabled
-		PT_INIT_FINETUNE_TABLE_STARTS
-	ENDC
+	PT_INIT_FINETUNE_TABLE_STARTS
 
 ; Volume-Meter
 	CNOP 0,4
@@ -1335,13 +1334,13 @@ horiz_scroll_logo_start
 	tst.w	hsl_start_active(a3)
 	bne.s	horiz_scroll_logo_start_quit
 	move.w	hsl_start_x_angle(a3),d2
-	cmp.w	#sine_table_length/2,d2	; 180° reached ?
+	cmp.w	#sine_table_length2/2,d2 ; 180° reached ?
 	ble.s	horiz_scroll_logo_start_skip
 	move.w	#FALSE,hsl_start_active(a3)
 	rts
 	CNOP 0,4
 horiz_scroll_logo_start_skip
-	lea	sine_table(pc),a0
+	lea	sine_table2(pc),a0
 	move.l	(a0,d2.w*4),d0		; cos(w)
 	MULUF.L hsl_start_x_radius*SHIRES_PIXEL_FACTOR*2*2,d0,d1 ; xr'=xr*cos(w)/2^16
 	swap	d0
@@ -1357,20 +1356,20 @@ horiz_scroll_logo_stop
 	tst.w	hsl_stop_active(a3)
 	bne.s	horiz_scroll_logo_stop_quit
 	move.w	hsl_stop_x_angle(a3),d2
-	cmp.w	#sine_table_length/4,d2 ; 90° reached ?
+	cmp.w	#sine_table_length2/4,d2 ; 90° reached ?
 	bgt.s   horiz_scroll_logo_stop_skip
 	move.w	#FALSE,hsl_stop_active(a3)
 	move.w	#FALSE,hsl_active(a3)	; stop logo movement
 	rts
 	CNOP 0,4
 horiz_scroll_logo_stop_skip
-	lea	sine_table(pc),a0
+	lea	sine_table2(pc),a0
 	move.l	(a0,d2.w*4),d0		; cos(w)
 	MULUF.L hsl_stop_x_radius*SHIRES_PIXEL_FACTOR*2*2,d0,d1 ; x'=xr*cos(w)/2^16
 	swap	d0
 	add.w	#hsl_stop_x_center*SHIRES_PIXEL_FACTOR*2,d0
 	move.w	d0,hsl_variable_x_radius(a3)
-	subq.w	#hsl_stop_x_angle_speed,d2 ; next x angle
+	sub.w	hsl_stop_x_angle_speed(a3),d2 ; next x angle
 	move.w	d2,hsl_stop_x_angle(a3) 
 horiz_scroll_logo_stop_quit
 	rts
@@ -1380,12 +1379,13 @@ horiz_scroll_logo
 	tst.w	hsl_active(a3)
 	bne.s	horiz_scroll_logo_quit
 	move.w	hsl_x_angle(a3),d1
-	lea	sine_table(pc),a0
+	lea	sine_table2(pc),a0
 	move.w	2(a0,d1.w*4),d3		; sin(w)
 	muls.w	hsl_variable_x_radius(a3),d3 ; x'=xrsin(w)/2^16
 	swap	d3
 	add.w	#hsl_x_center*SHIRES_PIXEL_FACTOR,d3
-	addq.b	#hsl_x_angle_speed,d1 	; next x angle
+	addq.w	#hsl_x_angle_speed,d1 	; next x angle
+	and.w	#sine_table_length2-1,d1 ; remove overflow
 	move.w	d1,hsl_x_angle(a3)	
 	moveq	#lg_image_y_position,d4
 	MOVEF.W lg_image_y_size,d5
@@ -1488,7 +1488,7 @@ tb_get_yz_coords
 	move.w	d5,d0
 	add.b	(vm_audio_channel1_info+aci_yanglestep+1,pc,d1.w*2),d0 ; next y angle step
 	move.w	d0,tb_y_angle_step_angle(a3) 
-	lea	sine_table(pc),a0	
+	lea	sine_table1(pc),a0
 	lea	tb_yz_coords(pc),a1
 	move.w	#tb_y_centre,a2
 	move.w	#tb_y_angle_step_centre,a4
@@ -1502,7 +1502,7 @@ tb_get_yz_coords_loop1
 	add.b	d0,d4			; next y angle
 	moveq	#tb_bars_number-1,d6
 tb_get_yz_coords_loop2
-	moveq	#-(sine_table_length/4),d1 ; - 90°
+	moveq	#-(sine_table_length1/4),d1 ; - 90°
 	move.l	(a0,d2.w*4),d0		; sin(w)
 	add.w	d2,d1			; y angle - 90°
 	ext.w	d1
@@ -1862,13 +1862,13 @@ bar_fader_in
 	move.w	bfi_fader_angle(a3),d2
 	move.w	d2,d0
 	ADDF.W	bfi_fader_angle_speed,d0 ; next angle
-	cmp.w	#sine_table_length/2,d0	; angle <= 180° ?
+	cmp.w	#sine_table_length1/2,d0 ; angle <= 180° ?
 	ble.s	bar_fader_in_skip
-	MOVEF.W sine_table_length/2,d0	; 180°
+	MOVEF.W sine_table_length1/2,d0	; 180°
 bar_fader_in_skip
 	move.w	d0,bfi_fader_angle(a3) 
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
-	lea	sine_table(pc),a0	
+	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
 	MULUF.L bfi_fader_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
 	swap	d0
@@ -1898,13 +1898,13 @@ bar_fader_out
 	move.w	bfo_fader_angle(a3),d2
 	move.w	d2,d0
 	ADDF.W	bfo_fader_angle_speed,d0 ; next angle
-	cmp.w	#sine_table_length/2,d0	; angle <= 180° ?
+	cmp.w	#sine_table_length1/2,d0 ; angle <= 180° ?
 	ble.s	bar_fader_out_skip
-	MOVEF.W sine_table_length/2,d0	; 180°
+	MOVEF.W sine_table_length1/2,d0	; 180°
 bar_fader_out_skip
 	move.w	d0,bfo_fader_angle(a3) 
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
-	lea	sine_table(pc),a0	
+	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
 	MULUF.L bfo_fader_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
 	swap	d0
@@ -1972,14 +1972,14 @@ scroll_logo_bottom_in
 	tst.w	slbi_active(a3)
 	bne.s	scroll_logo_bottom_in_quit
 	move.w	slbi_y_angle(a3),d2
-	cmp.w	#sine_table_length/4,d2	; 90° reached ?
+	cmp.w	#sine_table_length1/4,d2 ; 90° reached ?
 	ble.s	scroll_logo_bottom_in_skip
 	move.w	#FALSE,slbi_active(a3)
 	clr.w	logo_enabled(a3)
 	bra.s	scroll_logo_bottom_in_quit
 	CNOP 0,4
 scroll_logo_bottom_in_skip
-	lea	sine_table,a0
+	lea	sine_table1,a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
 	MULUF.L slb_y_radius*2,d0,d1 	; y'=yr*cos(w)/2^16
 	swap	d0
@@ -1999,13 +1999,13 @@ scroll_logo_bottom_out
 	tst.w	slbo_active(a3)
 	bne.s	scroll_logo_bottom_out_quit
 	move.w	slbo_y_angle(a3),d2
-	cmp.w	#sine_table_length/2,d2 ; 180° reached ?
+	cmp.w	#sine_table_length1/2,d2 ; 180° reached ?
 	ble.s	scroll_logo_bottom_out_skip
 	move.w	#FALSE,slbo_active(a3)
 	bra.s	scroll_logo_bottom_out_quit
 	CNOP 0,4
 scroll_logo_bottom_out_skip
-	lea	sine_table,a0	
+	lea	sine_table1,a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
 	MULUF.L slb_y_radius*2,d0,d1	; y'=yr*cos(w)/2^16
 	swap	d0
@@ -2191,13 +2191,13 @@ rgb8_colors_fader_cross
 	move.w	cfc_rgb8_fader_angle(a3),d2
 	move.w	d2,d0
 	ADDF.W	cfc_rgb8_fader_angle_speed,d0 ; next angle
-	cmp.w	#sine_table_length/2,d0	; angle <= 180° ?
+	cmp.w	#sine_table_length1/2,d0 ; angle <= 180° ?
 	ble.s	rgb8_colors_fader_cross_skip
-	MOVEF.W sine_table_length/2,d0	; 180°
+	MOVEF.W sine_table_length1/2,d0	; 180°
 rgb8_colors_fader_cross_skip
 	move.w	d0,cfc_rgb8_fader_angle(a3) 
 	MOVEF.W cfc_rgb8_colors_number*3,d6 ; RGB counter
-	lea	sine_table(pc),a0	
+	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
 	MULUF.L cfc_rgb8_fader_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
 	swap	d0
@@ -2303,7 +2303,7 @@ control_counters
 	move.w	#cfc_rgb8_colors_number*3,cfc_rgb8_colors_counter(a3)
 	clr.w	cfc_rgb8_copy_colors_active(a3)
 	clr.w	cfc_rgb8_active(a3)
-	move.w	#sine_table_length/4,cfc_rgb8_fader_angle(a3) ; 90°
+	move.w	#sine_table_length1/4,cfc_rgb8_fader_angle(a3) ; 90°
 control_counters_skip1
 	move.w	d0,cfc_rgb8_fader_delay_counter(a3) 
 control_counters_skip2
@@ -2355,7 +2355,8 @@ mh_exit_demo
 	tst.w	hsl_active(a3)
 	bne.s	mh_exit_demo_skip1
 	clr.w	hsl_stop_active(a3)
-	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180°
+	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
+	move.w	#hsl_stop_x_angle_speed2,hsl_stop_x_angle_speed(a3)
 mh_exit_demo_skip1
 	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3) ; scroll text double speed
 	move.w	#hst_stop_text-hst_text,hst_text_table_start(a3) ; no characters
@@ -2366,7 +2367,8 @@ mh_exit_demo_skip2
 	tst.w	hsl_active(a3)
 	bne.s	mh_exit_demo_skip3
 	clr.w	hsl_stop_active(a3)
-	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180°
+	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
+	move.w	#hsl_stop_x_angle_speed2,hsl_stop_x_angle_speed(a3)
 mh_exit_demo_skip3
 	move.w	#quit_delay,quit_delay_counter(a3)
 mh_exit_demo_quit
@@ -2456,12 +2458,13 @@ pt_toggle_stripes_y_movement
 pt_start_horiz_logo_scroll
 	clr.w	hsl_active(a3)
 	clr.w	hsl_start_active(a3)
-	move.w	#sine_table_length/4,hsl_start_x_angle(a3) ; 90°
+	move.w	#sine_table_length2/4,hsl_start_x_angle(a3) ; 90°
 	rts
 	CNOP 0,4
 pt_stop_horiz_logo_scroll
 	clr.w	hsl_stop_active(a3)
-	move.w	#sine_table_length/2,hsl_stop_x_angle(a3) ; 180°
+	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
+	move.w	#hsl_stop_x_angle_speed1,hsl_stop_x_angle_speed(a3)
 	rts
 	CNOP 0,4
 pt_restart_scrolltext
@@ -2504,7 +2507,7 @@ spr_ptrs_display
 	DS.L spr_number
 
 	CNOP 0,4
-sine_table
+sine_table1
 	INCLUDE "sine-table-256x32.i"
 
 
@@ -2667,8 +2670,8 @@ hst_stop_text
 
 	DC.B "$VER: "
 	DC.B "RSE-FlexiTwister "
-	DC.B "1.3 "
-	DC.B "(22.12.24) "
+	DC.B "1.4 "
+	DC.B "(26.12.24) "
 	DC.B "© 2024/2025 by Resistance",0
 	EVEN
 
