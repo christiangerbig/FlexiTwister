@@ -92,6 +92,10 @@
 ; - logo stops with two different velocities (on exit and per 8xx command)
 ; - module: cymbal volume reduced
 
+; V.1.5
+; - final version
+; - with updated includes
+
 
 ; PT 8xy command
 ; 810	start Bar-Fader-In
@@ -2670,8 +2674,8 @@ hst_stop_text
 
 	DC.B "$VER: "
 	DC.B "RSE-FlexiTwister "
-	DC.B "1.4 "
-	DC.B "(26.12.24) "
+	DC.B "1.5 "
+	DC.B "(28.12.24) "
 	DC.B "© 2024/2025 by Resistance",0
 	EVEN
 
@@ -2698,6 +2702,6 @@ hst_image_data SECTION hst_gfx,DATA_C
 
 ; Logo
 lg_image_data SECTION lg_gfx,DATA
-	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/graphics/RSE_FT_Logo_WIP03e-b2.rawblit"
+	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/graphics/256x54x8x2-RSE-Logo.rawblit"
 
 	END
