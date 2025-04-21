@@ -1,6 +1,5 @@
 ; Requirements
 ; CPU:		68020+
-; Fast-Memory:	-
 ; Chipset:	AGA PAL
 ; OS:		3.0+
 
@@ -113,10 +112,8 @@
 ; COLOR01: 3 x 16 = 48 colors: bars, sprites (2nd color bank)
 ; COLOR01: 1 x 16 = 16 colors: color gradient scroll text centered
 
-; execution time 68020: 264 raster lines
+; Execution time 68020: 264 raster lines
 
-
-	SECTION code_and_variables,CODE
 
 	MC68040
 
@@ -165,28 +162,36 @@ requires_060_cpu		EQU FALSE
 requires_fast_memory		EQU FALSE
 requires_multiscan_monitor	EQU FALSE
 
-workbench_start_enabled		EQU TRUE
+workbench_start_enabled		EQU FALSE
 screen_fader_enabled		EQU TRUE
 text_output_enabled		EQU FALSE
 
 open_border_enabled		EQU TRUE
 
+; PT-Replay
 pt_ciatiming_enabled		EQU TRUE
-pt_metronome_enabled		EQU FALSE
+pt_usedfx			EQU %1111110100001000
+pt_usedefx			EQU %0000100000000000
 pt_mute_enabled			EQU FALSE
+pt_music_fader_enabled		EQU TRUE
+pt_fade_out_delay		EQU 1 ; tick
+pt_split_module_enabled		EQU TRUE
 pt_track_notes_played_enabled	EQU TRUE
 pt_track_volumes_enabled	EQU FALSE
 pt_track_periods_enabled	EQU TRUE
 pt_track_data_enabled		EQU FALSE
-pt_music_fader_enabled		EQU TRUE
-pt_split_module_enabled		EQU TRUE
-pt_usedfx			EQU %1111110100001000
-pt_usedefx			EQU %0000100000000000
+	IFD PROTRACKER_VERSION_3
+pt_metronome_enabled		EQU FALSE
+pt_metrochanbits		EQU pt_metrochan1
+pt_metrospeedbits		EQU pt_metrospeed4th
+	ENDC
 
+; Twisted-Bars
 tb_quick_clear_enabled		EQU FALSE
 tb_restore_cl_cpu_enabled	EQU TRUE
 tb_restore_cl_blitter_enabled	EQU FALSE
 
+; Colors-Fader-Cross
 cfc_rgb8_prefade_enabled	EQU TRUE
 
 dma_bits			EQU DMAF_SPRITE|DMAF_BLITTER|DMAF_COPPER|DMAF_RASTER|DMAF_MASTER|DMAF_SETCLR
@@ -245,7 +250,7 @@ spr_used_number			EQU 8
 audio_memory_size		EQU 0
 	ENDC
 	IFD PROTRACKER_VERSION_3
-audio_memory_size		EQU 2
+audio_memory_size		EQU 1*WORD_SIZE
 	ENDC
 
 disk_memory_size		EQU 0
@@ -254,7 +259,7 @@ chip_memory_size		EQU 0
 	IFEQ pt_ciatiming_enabled
 ciab_cra_bits			EQU CIACRBF_LOAD
 	ENDC
-ciab_crb_bits			EQU CIACRBF_LOAD|CIACRBF_RUNMODE ; Oneshot mode
+ciab_crb_bits			EQU CIACRBF_LOAD|CIACRBF_RUNMODE ; oneshot mode
 ciaa_ta_time			EQU 0
 ciaa_tb_time			EQU 0
 	IFEQ pt_ciatiming_enabled
@@ -332,9 +337,6 @@ lg_image_x_centre		EQU (visible_pixels_number-lg_image_x_size)/2
 
 lg_image_x_position		EQU display_window_hstart+lg_image_x_centre+14
 lg_image_y_position		EQU MINROW
-
-; PT-Replay
-pt_fade_out_delay		EQU 1	; Tick
 
 ; Volume-Meter
 vm_period_divider		EQU 48
@@ -515,6 +517,21 @@ pf1_bpl1dat_x_offset		EQU pf1_planes_x_offset-pf_pixel_per_datafetch
 
 	INCLUDE "sprite-attributes.i"
 
+; PT-Replay
+	INCLUDE "music-tracker/pt-song.i"
+
+	INCLUDE "music-tracker/pt-temp-channel.i"
+
+
+	RSRESET
+
+audio_channel_info		RS.B 0
+
+aci_yanglespeed			RS.W 1
+aci_yanglestep			RS.W 1
+
+audio_channel_info_size		RS.B 0
+
 
 	RSRESET
 
@@ -607,7 +624,7 @@ cl2_size2			EQU copperlist2_size
 cl2_size3			EQU copperlist2_size
 
 
-; sprite0 additional structure
+; Sprite0 additional structure
 	RSRESET
 
 spr0_extension1			RS.B 0
@@ -617,7 +634,7 @@ spr0_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr0_extension1_size		RS.B 0
 
-; sprite0 main structure
+; Sprite0 main structure
 	RSRESET
 
 spr0_begin			RS.B 0
@@ -628,7 +645,7 @@ spr0_end			RS.L 1*(spr_pixel_per_datafetch/16)
 
 sprite0_size			RS.B 0
 
-; sprite1 additional structure
+; Sprite1 additional structure
 	RSRESET
 
 spr1_extension1			RS.B 0
@@ -638,7 +655,7 @@ spr1_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr1_extension1_size		RS.B 0
 
-; sprite1 main structure
+; Sprite1 main structure
 	RSRESET
 
 spr1_begin			RS.B 0
@@ -649,7 +666,7 @@ spr1_end			RS.L 1*(spr_pixel_per_datafetch/16)
 
 sprite1_size			RS.B 0
 
-; sprite2 additional structure
+; Sprite2 additional structure
 	RSRESET
 
 spr2_extension1	RS.B 0
@@ -659,7 +676,7 @@ spr2_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr2_extension1_size		RS.B 0
 
-; sprite2 main structure
+; Sprite2 main structure
 	RSRESET
 
 spr2_begin			RS.B 0
@@ -670,7 +687,7 @@ spr2_end			RS.L 1*(spr_pixel_per_datafetch/16)
 
 sprite2_size			RS.B 0
 
-; sprite3 additional structure
+; Sprite3 additional structure
 	RSRESET
 
 spr3_extension1	RS.B 0
@@ -680,7 +697,7 @@ spr3_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr3_extension1_size		RS.B 0
 
-; sprite3 main structure
+; Sprite3 main structure
 	RSRESET
 
 spr3_begin			RS.B 0
@@ -691,7 +708,7 @@ spr3_end			RS.L 1*(spr_pixel_per_datafetch/16)
 
 sprite3_size			RS.B 0
 
-; sprite4 additional structure
+; Sprite4 additional structure
 	RSRESET
 
 spr4_extension1			RS.B 0
@@ -701,7 +718,7 @@ spr4_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr4_extension1_size		RS.B 0
 
-; sprite4 main structure
+; Sprite4 main structure
 	RSRESET
 
 spr4_begin			RS.B 0
@@ -712,7 +729,7 @@ spr4_end			RS.L 1*(spr_pixel_per_datafetch/16)
 
 sprite4_size			RS.B 0
 
-; sprite5 additional structure
+; Sprite5 additional structure
 	RSRESET
 
 spr5_extension1	RS.B 0
@@ -722,7 +739,7 @@ spr5_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr5_extension1_size		RS.B 0
 
-; sprite5 main structure
+; Sprite5 main structure
 	RSRESET
 
 spr5_begin			RS.B 0
@@ -733,7 +750,7 @@ spr5_end			RS.L 1*(spr_pixel_per_datafetch/16)
 
 sprite5_size			RS.B 0
 
-; sprite6 additional structure
+; Sprite6 additional structure
 	RSRESET
 
 spr6_extension1			RS.B 0
@@ -743,7 +760,7 @@ spr6_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr6_extension1_size		RS.B 0
 
-; sprite6 main structure
+; Sprite6 main structure
 	RSRESET
 
 spr6_begin			RS.B 0
@@ -754,7 +771,7 @@ spr6_end			RS.L 1*(spr_pixel_per_datafetch/16)
 
 sprite6_size			RS.B 0
 
-; sprite7 additional structure
+; Sprite7 additional structure
 	RSRESET
 
 spr7_extension1	RS.B 0
@@ -764,7 +781,7 @@ spr7_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
 
 spr7_extension1_size		RS.B 0
 
-; sprite7 main structure
+; Sprite7 main structure
 	RSRESET
 
 spr7_begin			RS.B 0
@@ -921,20 +938,7 @@ quit_delay_counter		RS.W 1
 variables_size			RS.B 0
 
 
-; PT-Replay
-	INCLUDE "music-tracker/pt-song.i"
-
-	INCLUDE "music-tracker/pt-temp-channel.i"
-
-
-	RSRESET
-
-audio_channel_info		RS.B 0
-
-aci_yanglespeed			RS.W 1
-aci_yanglestep			RS.W 1
-
-audio_channel_info_size		RS.B 0
+	SECTION code,CODE
 
 
 	INCLUDE "sys-wrapper.i"
@@ -1332,7 +1336,7 @@ set_playfield1_loop
 	rts
 
 
-; calculate x radius for Horiz-Scroll-Logo
+; Calculate x radius for Horiz-Scroll-Logo
 	CNOP 0,4
 horiz_scroll_logo_start
 	tst.w	hsl_start_active(a3)
@@ -1459,11 +1463,10 @@ get_channels_amplitudes
 	CNOP 0,4
 get_channel_amplitude
 ; Input
-; d2.w	... Skalierung
-; a0	... Temporäre Struktur des Audiokanals
-; a1	... Zeiger auf Kanalinfo-Struktur
+; d2.w	Scaling
+; a0.l	Temporary audio channel structure
+; a1.l	Channel info structure
 ; Result
-; d0.l	... Kein Rückgabewert
 	tst.b	n_notetrigger(a0)	; new note played ?
 	bne.s	get_channel_amplitude_quit
 	move.b	#FALSE,n_notetrigger(a0)
@@ -1803,9 +1806,9 @@ hst_get_text_softscroll
 	CNOP 0,4
 hst_check_control_codes
 ; Input
-; d0.b	... ascii code
+; d0.b	ascii code
 ; Result
-; d0.l	... return value: return code
+; d0.l	return value: return code
 	cmp.b	#ASCII_CTRL_P,d0
 	beq.s	hst_pause_scrolltext
 	cmp.b	#ASCII_CTRL_S,d0
@@ -2067,7 +2070,7 @@ chunky_columns_fader_in
 	beq.s	ccfi_fader_mode_4
 chunky_columns_fader_in_quit
 	rts
-; fade in from left to right
+; Fade in from left to right
 	CNOP 0,4
 ccfi_fader_mode_1
 	clr.b	(a0,d1.w)		; state fade in
@@ -2076,7 +2079,7 @@ ccfi_fader_mode_1
 	bgt.s	ccfi_fader_mode_skip
 	move.w	d1,ccfi_start(a3)
 	rts
-; fade in from right to left
+; Fade in from right to left
 	CNOP 0,4
 ccfi_fader_mode_2
 	move.w	d1,d0			; start value
@@ -2087,7 +2090,7 @@ ccfi_fader_mode_2
 	bgt.s	ccfi_fader_mode_skip
 	move.w	d1,ccfi_start(a3)
 	rts
-; fade in from left and right simutanleously
+; Fade in from left and right simutanleously
 	CNOP 0,4
 ccfi_fader_mode_3
 	clr.b	(a0,d1.w)		; state fade in
@@ -2100,7 +2103,7 @@ ccfi_fader_mode_3
 	bgt.s	ccfi_fader_mode_skip
 	move.w	d1,ccfi_start(a3)
 	rts
-; fade in from left and right every second column simutanleously
+; Fade in from left and right every second column simutanleously
 	CNOP 0,4
 ccfi_fader_mode_4
 	clr.b	(a0,d1.w)		; state fade in
@@ -2137,7 +2140,7 @@ chunky_columns_fader_out
 	beq.s	ccfo_fader_mode_4
 chunky_columns_fader_out_quit
 	rts
-; fade out from left to right
+; Fade out from left to right
 	CNOP 0,4
 ccfo_fader_mode_1
 	move.b	#FALSE,(a0,d1.w)	; state fade out
@@ -2146,7 +2149,7 @@ ccfo_fader_mode_1
 	bgt.s	ccfo_fader_mode_skip
 	move.w	d1,ccfo_start(a3)
 	rts
-; fade out from right to left
+; Fade out from right to left
 	CNOP 0,4
 ccfo_fader_mode_2
 	move.w	d1,d0			; start value
@@ -2157,7 +2160,7 @@ ccfo_fader_mode_2
 	bgt.s	ccfo_fader_mode_skip
 	move.w	d1,ccfo_start(a3)
 	rts
-; fade out from left to right simutaneously
+; Fade out from left to right simutaneously
 	CNOP 0,4
 ccfo_fader_mode_3
 	move.b	#FALSE,(a0,d1.w)	; state fade out
@@ -2170,7 +2173,7 @@ ccfo_fader_mode_3
 	bgt.s	ccfo_fader_mode_skip
 	move.w	d1,ccfo_start(a3)
 	rts
-; fade in from left and right every second column simutanleously
+; Fade in from left and right every second column simutanleously
 	CNOP 0,4
 ccfo_fader_mode_4
 	move.b	#FALSE,(a0,d1.w)	; state fade out
@@ -2499,6 +2502,7 @@ nmi_int_server
 
 
 	INCLUDE "sys-structures.i"
+
 
 	CNOP 0,4
 pf1_rgb8_color_table
