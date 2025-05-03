@@ -1,7 +1,7 @@
 ; Requirements
-; CPU:		68020+
-; Chipset:	AGA PAL
-; OS:		3.0+
+; 68020+
+; AGA PAL
+; 3.0+
 
 
 ; History/Changes
@@ -107,10 +107,12 @@
 ; 880	restart scroll text
 ; 89n	select audio channel for twister
 
+
 ; COLOR00: 3 x 16 = 48 colors: bars, sprites (2nd color bank)
 ; COLOR00: 2 x 40 = 80 colors: striped bar
 ; COLOR01: 3 x 16 = 48 colors: bars, sprites (2nd color bank)
 ; COLOR01: 1 x 16 = 16 colors: color gradient scroll text centered
+
 
 ; Execution time 68020: 264 raster lines
 
@@ -118,7 +120,7 @@
 	MC68040
 
 
-	INCDIR "Daten:include3.5/"
+	INCDIR "include3.5:"
 
 	INCLUDE "exec/exec.i"
 	INCLUDE "exec/exec_lib.i"
@@ -145,10 +147,11 @@
 	INCLUDE "hardware/dmabits.i"
 	INCLUDE "hardware/intbits.i"
 
-	INCDIR "Daten:Asm-Sources.AGA/custom-includes/"
+
+PROTRACKER_VERSION_3		SET 1
 
 
-PROTRACKER_VERSION_3	SET 1
+	INCDIR "custom-includes-aga:"
 
 
 	INCLUDE "macros.i"
@@ -174,17 +177,15 @@ pt_usedfx			EQU %1111110100001000
 pt_usedefx			EQU %0000100000000000
 pt_mute_enabled			EQU FALSE
 pt_music_fader_enabled		EQU TRUE
-pt_fade_out_delay		EQU 1 ; tick
+pt_fade_out_delay		EQU 1	; tick
 pt_split_module_enabled		EQU TRUE
 pt_track_notes_played_enabled	EQU TRUE
 pt_track_volumes_enabled	EQU FALSE
 pt_track_periods_enabled	EQU TRUE
 pt_track_data_enabled		EQU FALSE
-	IFD PROTRACKER_VERSION_3
 pt_metronome_enabled		EQU FALSE
 pt_metrochanbits		EQU pt_metrochan1
 pt_metrospeedbits		EQU pt_metrospeed4th
-	ENDC
 
 ; Twisted-Bars
 tb_quick_clear_enabled		EQU FALSE
@@ -383,32 +384,32 @@ sp_stripe_height		EQU 16
 hst_image_x_size		EQU 320
 hst_image_plane_width		EQU hst_image_x_size/8
 hst_image_depth			EQU 1
-hst_origin_character_x_size	EQU 16
-hst_origin_character_y_size	EQU 16
+hst_origin_char_x_size		EQU 16
+hst_origin_char_y_size		EQU 16
 
-hst_text_character_x_size	EQU 16
-hst_text_character_width	EQU hst_text_character_x_size/8
-hst_text_character_y_size	EQU hst_origin_character_y_size
-hst_text_character_depth	EQU hst_image_depth
+hst_text_char_x_size		EQU 16
+hst_text_char_width		EQU hst_text_char_x_size/8
+hst_text_char_y_size		EQU hst_origin_char_y_size
+hst_text_char_depth		EQU hst_image_depth
 
-hst_horiz_scroll_window_x_size 	EQU visible_pixels_number+hst_text_character_x_size
+hst_horiz_scroll_window_x_size	EQU visible_pixels_number+hst_text_char_x_size
 hst_horiz_scroll_window_width	EQU hst_horiz_scroll_window_x_size/8
-hst_horiz_scroll_window_y_size 	EQU hst_text_character_y_size
+hst_horiz_scroll_window_y_size	EQU hst_text_char_y_size
 hst_horiz_scroll_window_depth	EQU hst_image_depth
 hst_horiz_scroll_speed1		EQU 2
 hst_horiz_scroll_speed2		EQU 8
 
-hst_text_character_x_restart	EQU hst_horiz_scroll_window_x_size
-hst_text_characters_number	EQU hst_horiz_scroll_window_x_size/hst_text_character_x_size
+hst_text_char_x_restart		EQU hst_horiz_scroll_window_x_size
+hst_text_characters_number	EQU hst_horiz_scroll_window_x_size/hst_text_char_x_size
 
 hst_text_x_position		EQU 0
-hst_text_y_position		EQU (pf1_y_size3-hst_text_character_y_size)/2
+hst_text_y_position		EQU (pf1_y_size3-hst_text_char_y_size)/2
 
-hst_color_gradient_height	EQU hst_text_character_y_size
-hst_color_gradient_y_pos	EQU (ssb_bar_height-hst_text_character_y_size)/2
+hst_color_gradient_height	EQU hst_text_char_y_size
+hst_color_gradient_y_pos	EQU (ssb_bar_height-hst_text_char_y_size)/2
 
-hst_copy_blit_x_size		EQU hst_text_character_x_size
-hst_copy_blit_y_size		EQU hst_text_character_y_size*hst_text_character_depth
+hst_copy_blit_x_size		EQU hst_text_char_x_size
+hst_copy_blit_y_size		EQU hst_text_char_y_size*hst_text_char_depth
 
 hst_horiz_scroll_blit_x_size	EQU hst_horiz_scroll_window_x_size
 hst_horiz_scroll_blit_y_size	EQU hst_horiz_scroll_window_y_size*hst_horiz_scroll_window_depth
@@ -483,7 +484,7 @@ ccfo_delay_speed		EQU 1
 ccfo_delay			EQU 1
 
 ; Main
-quit_delay			EQU (hst_origin_character_x_size*(((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1))/hst_horiz_scroll_speed2
+quit_delay			EQU (hst_origin_char_x_size*(((hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1))/hst_horiz_scroll_speed2
 
 
 color_step1			EQU 256/(tb_bar_height/2)
@@ -505,11 +506,11 @@ tb_bplam_table_size		EQU ct_size1*2
 ssb_bplam_table_size		EQU ct_size2
 
 
-pf1_planes_x_offset		EQU 16+32
-pf1_bpl1dat_x_offset		EQU pf1_planes_x_offset-pf_pixel_per_datafetch
+pf1_plane_x_offset		EQU 16+32
+pf1_bpl1dat_x_offset		EQU pf1_plane_x_offset-pf_pixel_per_datafetch
 
 
-	INCLUDE "except-vectors-offsets.i"
+	INCLUDE "except-vectors.i"
 
 
 	INCLUDE "extra-pf-attributes.i"
@@ -537,11 +538,11 @@ audio_channel_info_size		RS.B 0
 
 cl1_begin			RS.B 0
 
-	INCLUDE "copperlist1-offsets.i"
+	INCLUDE "copperlist1.i"
 
 cl1_COPJMP2			RS.L 1
 
-copperlist1_size 		RS.B 0
+copperlist1_size		RS.B 0
 
 
 	RSRESET
@@ -561,7 +562,7 @@ cl2_ext1_BPLCON4_6		RS.L 1
 cl2_ext1_BPLCON4_7		RS.L 1
 cl2_ext1_BPLCON4_8		RS.L 1
 cl2_ext1_BPLCON4_9		RS.L 1
-cl2_ext1_BPLCON4_10 		RS.L 1
+cl2_ext1_BPLCON4_10		RS.L 1
 cl2_ext1_BPLCON4_11		RS.L 1
 cl2_ext1_BPLCON4_12		RS.L 1
 cl2_ext1_BPLCON4_13		RS.L 1
@@ -629,8 +630,8 @@ cl2_size3			EQU copperlist2_size
 
 spr0_extension1			RS.B 0
 
-spr0_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr0_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr0_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr0_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr0_extension1_size		RS.B 0
 
@@ -641,7 +642,7 @@ spr0_begin			RS.B 0
 
 spr0_extension1_entry		RS.B spr0_extension1_size
 
-spr0_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr0_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite0_size			RS.B 0
 
@@ -650,8 +651,8 @@ sprite0_size			RS.B 0
 
 spr1_extension1			RS.B 0
 
-spr1_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr1_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr1_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr1_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr1_extension1_size		RS.B 0
 
@@ -662,7 +663,7 @@ spr1_begin			RS.B 0
 
 spr1_extension1_entry		RS.B spr1_extension1_size
 
-spr1_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr1_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite1_size			RS.B 0
 
@@ -671,8 +672,8 @@ sprite1_size			RS.B 0
 
 spr2_extension1	RS.B 0
 
-spr2_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr2_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr2_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr2_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr2_extension1_size		RS.B 0
 
@@ -683,7 +684,7 @@ spr2_begin			RS.B 0
 
 spr2_extension1_entry		RS.B spr2_extension1_size
 
-spr2_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr2_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite2_size			RS.B 0
 
@@ -692,8 +693,8 @@ sprite2_size			RS.B 0
 
 spr3_extension1	RS.B 0
 
-spr3_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr3_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr3_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr3_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr3_extension1_size		RS.B 0
 
@@ -702,9 +703,9 @@ spr3_extension1_size		RS.B 0
 
 spr3_begin			RS.B 0
 
-spr3_extension1_entry 		RS.B spr3_extension1_size
+spr3_extension1_entry		RS.B spr3_extension1_size
 
-spr3_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr3_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite3_size			RS.B 0
 
@@ -713,8 +714,8 @@ sprite3_size			RS.B 0
 
 spr4_extension1			RS.B 0
 
-spr4_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr4_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr4_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr4_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr4_extension1_size		RS.B 0
 
@@ -725,7 +726,7 @@ spr4_begin			RS.B 0
 
 spr4_extension1_entry		RS.B spr4_extension1_size
 
-spr4_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr4_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite4_size			RS.B 0
 
@@ -734,8 +735,8 @@ sprite4_size			RS.B 0
 
 spr5_extension1	RS.B 0
 
-spr5_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr5_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr5_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr5_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr5_extension1_size		RS.B 0
 
@@ -746,7 +747,7 @@ spr5_begin			RS.B 0
 
 spr5_extension1_entry		RS.B spr5_extension1_size
 
-spr5_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr5_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite5_size			RS.B 0
 
@@ -755,8 +756,8 @@ sprite5_size			RS.B 0
 
 spr6_extension1			RS.B 0
 
-spr6_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr6_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr6_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr6_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr6_extension1_size		RS.B 0
 
@@ -767,7 +768,7 @@ spr6_begin			RS.B 0
 
 spr6_extension1_entry		RS.B spr6_extension1_size
 
-spr6_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr6_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite6_size			RS.B 0
 
@@ -776,8 +777,8 @@ sprite6_size			RS.B 0
 
 spr7_extension1	RS.B 0
 
-spr7_ext1_header		RS.L 1*(spr_pixel_per_datafetch/16)
-spr7_ext1_planedata		RS.L (spr_pixel_per_datafetch/16)*lg_image_y_size
+spr7_ext1_header		RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
+spr7_ext1_planedata		RS.L (spr_pixel_per_datafetch/WORD_BITS)*lg_image_y_size
 
 spr7_extension1_size		RS.B 0
 
@@ -788,7 +789,7 @@ spr7_begin			RS.B 0
 
 spr7_extension1_entry		RS.B spr7_extension1_size
 
-spr7_end			RS.L 1*(spr_pixel_per_datafetch/16)
+spr7_end			RS.L 1*(spr_pixel_per_datafetch/WORD_BITS)
 
 sprite7_size			RS.B 0
 
@@ -839,14 +840,14 @@ extra_memory_size		RS.B 0
 
 	RSRESET
 
-	INCLUDE "variables-offsets.i"
+	INCLUDE "main-variables.i"
 
 ; PT-Replay
 	IFD PROTRACKER_VERSION_2 
-		INCLUDE "music-tracker/pt2-variables-offsets.i"
+		INCLUDE "music-tracker/pt2-variables.i"
 	ENDC
 	IFD PROTRACKER_VERSION_3
-		INCLUDE "music-tracker/pt3-variables-offsets.i"
+		INCLUDE "music-tracker/pt3-variables.i"
 	ENDC
 
 pt_effects_handler_active	RS.W 1
@@ -863,7 +864,7 @@ ssb_y_angle			RS.W 1
 
 ; Striped-Pattern
 sp_stripes_y_angle		RS.W 1
-sp_stripes_y_angle_speed 	RS.W 1
+sp_stripes_y_angle_speed	RS.W 1
 
 ; Horiz-Scrolltext
 	RS_ALIGN_LONGWORD
@@ -871,7 +872,7 @@ hst_image			RS.L 1
 hst_enabled			RS.W 1
 hst_text_table_start		RS.W 1
 hst_text_BLTCON0_bits		RS.W 1
-hst_character_toggle_image	RS.W 1
+hst_char_toggle_image		RS.W 1
 hst_text_y_offset		RS.W 1
 hst_horiz_scroll_speed		RS.W 1
 hst_pause_horiz_scroll_enabled	RS.W 1
@@ -951,7 +952,6 @@ init_main_variables
 	IFD PROTRACKER_VERSION_2 
 		PT2_INIT_VARIABLES
 	ENDC
-
 	IFD PROTRACKER_VERSION_3
 		PT3_INIT_VARIABLES
 	ENDC
@@ -980,7 +980,7 @@ init_main_variables
 	move.w	d1,hst_enabled(a3)
 	move.w	d0,hst_text_table_start(a3)
 	move.w	d0,hst_text_bltcon0_bits(a3)
-	move.w	d0,hst_character_toggle_image(a3)
+	move.w	d0,hst_char_toggle_image(a3)
 	move.w	d0,hst_text_y_offset(a3)
 	moveq	#hst_horiz_scroll_speed1,d2
 	move.w	d2,hst_horiz_scroll_speed(a3)
@@ -1076,6 +1076,7 @@ init_main
 	bsr	init_first_copperlist
 	bra	init_second_copperlist
 
+
 ; PT-Replay
 	PT_DETECT_SYS_FREQUENCY
 
@@ -1086,6 +1087,7 @@ init_main
 	PT_EXAMINE_SONG_STRUCTURE
 
 	PT_INIT_FINETUNE_TABLE_STARTS
+
 
 ; Volume-Meter
 	CNOP 0,4
@@ -1105,6 +1107,7 @@ vm_init_audio_channel_info
 	move.w	d0,aci_yanglestep(a0)
 	rts
 
+
 ; Sine-Striped-Bar
 	CNOP 0,4
 ssb_init_color_table
@@ -1117,6 +1120,7 @@ ssb_init_color_table_loop
 	move.l	d0,(a0)+		; dark color values
 	dbf	d7,ssb_init_color_table_loop
 	rts
+
 
 ; Twisted-Bars
 	CNOP 0,4
@@ -1131,7 +1135,9 @@ tb_init_color_table_loop
 	dbf	d7,tb_init_color_table_loop
 	rts
 
+
 	INIT_MIRROR_BPLAM_TABLE.B tb,0,2,segments_number1,color_values_number1,extra_memory,a3
+
 
 ; Sine-Striped-Bar / Horiz-Scrolltext
 	INIT_BPLAM_TABLE.B ssb,color_values_number1*segments_number1*2,2,color_values_number2*2,extra_memory,a3,em_bplam_table2
@@ -1142,6 +1148,7 @@ tb_init_color_table_loop
 	INIT_CHARACTERS_X_POSITIONS hst,LORES
 
 	INIT_CHARACTERS_IMAGES hst
+
 
 ; Bar-Fader
 	CNOP 0,4
@@ -1158,6 +1165,7 @@ init_sprites
 	INIT_SPRITE_POINTERS_TABLE
 
 	INIT_ATTACHED_SPRITES_CLUSTER lg,spr_ptrs_display,,,spr_x_size2,lg_image_y_size,NOHEADER
+
 
 	CNOP 0,4
 init_CIA_timers
@@ -1179,9 +1187,12 @@ init_first_copperlist
 	bsr	cl1_set_plane_ptrs
 	bra	copy_first_copperlist
 
+
 	COP_INIT_PLAYFIELD_REGISTERS cl1
 
+
 	COP_INIT_SPRITE_POINTERS cl1
+
 
 	CNOP 0,4
 cl1_init_colors
@@ -1219,13 +1230,18 @@ cl1_init_colors
 	COP_INIT_COLOR_LOW COLOR00,32
 	rts
 
+
 	COP_INIT_BITPLANE_POINTERS cl1
+
 
 	COP_SET_SPRITE_POINTERS cl1,construction2,spr_number
 
+
 	COP_SET_BITPLANE_POINTERS cl1,display,pf1_depth3
 
+
 	COPY_COPPERLIST cl1,2
+
 
 	CNOP 0,4
 init_second_copperlist
@@ -1236,9 +1252,12 @@ init_second_copperlist
 	bsr	copy_second_copperlist
 	bra	swap_second_copperlist
 
+
 	COP_INIT_BPLCON4_CHUNKY_SCREEN cl2,cl2_hstart1,cl2_vstart1,cl2_display_x_size,cl2_display_y_size,open_border_enabled,tb_quick_clear_enabled,FALSE
 
+
 	COP_INIT_COPINT cl2,cl2_hstart2,cl2_vstart2
+
 
 	COPY_COPPERLIST cl2,3
 
@@ -1256,6 +1275,7 @@ no_sync_routines
 	ENDC
 	rts
 
+
 	IFEQ cfc_rgb8_prefade_enabled
 		CNOP 0,4
 cfc_rgb8_init_start_colors
@@ -1263,7 +1283,7 @@ cfc_rgb8_init_start_colors
 		bsr	rgb8_colors_fader_cross
 		tst.w	cfc_rgb8_copy_colors_active(a3)
 		beq.s	cfc_rgb8_init_start_colors
-		move.w	#FALSE,cfc_rgb8_copy_colors_active(a3) ; delay counter inactive
+		move.w	#FALSE,cfc_rgb8_copy_colors_active(a3) ; inactivate delay counter
 		rts
 	ENDC
 
@@ -1311,16 +1331,19 @@ beam_routines
 
 	SWAP_COPPERLIST cl1,2
 
+
 	SWAP_COPPERLIST cl2,3
 
+
 	SWAP_PLAYFIELD pf1,3
+
 
 	CNOP 0,4
 set_playfield1
 	moveq	#ssb_y_radius,d1	
 	sub.w	hst_text_y_offset(a3),d1 ; vertical centering
 	MULUF.W pf1_plane_width*pf1_depth3,d1,d0 ; y offset
-	ADDF.W	pf1_planes_x_offset/8,d1
+	ADDF.W	pf1_plane_x_offset/8,d1
 	move.l	cl1_display(a3),a0
 	ADDF.W	cl1_BPL1PTH+WORD_SIZE,a0
 	move.l	pf1_display(a3),a1
@@ -1342,7 +1365,7 @@ horiz_scroll_logo_start
 	tst.w	hsl_start_active(a3)
 	bne.s	horiz_scroll_logo_start_quit
 	move.w	hsl_start_x_angle(a3),d2
-	cmp.w	#sine_table_length2/2,d2 ; 180° reached ?
+	cmp.w	#sine_table_length2/2,d2 ; 180° ?
 	ble.s	horiz_scroll_logo_start_skip
 	move.w	#FALSE,hsl_start_active(a3)
 	rts
@@ -1359,12 +1382,13 @@ horiz_scroll_logo_start_skip
 horiz_scroll_logo_start_quit
 	rts
 
+
 	CNOP 0,4
 horiz_scroll_logo_stop
 	tst.w	hsl_stop_active(a3)
 	bne.s	horiz_scroll_logo_stop_quit
 	move.w	hsl_stop_x_angle(a3),d2
-	cmp.w	#sine_table_length2/4,d2 ; 90° reached ?
+	cmp.w	#sine_table_length2/4,d2 ; 90° ?
 	bgt.s   horiz_scroll_logo_stop_skip
 	move.w	#FALSE,hsl_stop_active(a3)
 	move.w	#FALSE,hsl_active(a3)	; stop logo movement
@@ -1382,6 +1406,7 @@ horiz_scroll_logo_stop_skip
 horiz_scroll_logo_stop_quit
 	rts
 
+
 	CNOP 0,4
 horiz_scroll_logo
 	tst.w	hsl_active(a3)
@@ -1392,7 +1417,7 @@ horiz_scroll_logo
 	muls.w	hsl_variable_x_radius(a3),d3 ; x'=xrsin(w)/2^16
 	swap	d3
 	add.w	#hsl_x_center*SHIRES_PIXEL_FACTOR,d3
-	addq.w	#hsl_x_angle_speed,d1 	; next x angle
+	addq.w	#hsl_x_angle_speed,d1	; next x angle
 	and.w	#sine_table_length2-1,d1 ; remove overflow
 	move.w	d1,hsl_x_angle(a3)	
 	moveq	#lg_image_y_position,d4
@@ -1418,7 +1443,9 @@ horiz_scroll_logo_loop
 horiz_scroll_logo_quit
 	rts
 
+
 	CLEAR_BPLCON4_CHUNKY_SCREEN tb,cl2,construction1,extension1,quick_clear_enabled
+
 
 	CNOP 0,4
 cl2_update_bpl1dat
@@ -1443,6 +1470,7 @@ cl2_update_bpl1dat_loop
 	dbf	d7,cl2_update_bpl1dat_loop
 	rts
 
+
 	CNOP 0,4
 get_channels_amplitudes
 	moveq	#vm_period_divider,d2
@@ -1460,13 +1488,14 @@ get_channels_amplitudes
 	bsr.s	get_channel_amplitude
 	rts
 
-	CNOP 0,4
-get_channel_amplitude
+
 ; Input
 ; d2.w	Scaling
 ; a0.l	Temporary audio channel structure
 ; a1.l	Channel info structure
 ; Result
+	CNOP 0,4
+get_channel_amplitude
 	tst.b	n_notetrigger(a0)	; new note played ?
 	bne.s	get_channel_amplitude_quit
 	move.b	#FALSE,n_notetrigger(a0)
@@ -1480,6 +1509,7 @@ get_channel_amplitude
 	move.w	d0,(a1)			; y angle step
 get_channel_amplitude_quit
 	rts
+
 
 	CNOP 0,4
 tb_get_yz_coords
@@ -1526,11 +1556,12 @@ tb_get_yz_coords_loop2
 	move.l	(a7)+,a4
 	rts
 
+
 	CNOP 0,4
 sp_get_stripes_y_coords
 	move.w	sp_stripes_y_angle(a3),d2
 	move.w	d2,d0
-	MOVEF.W (sine_table_length2/2)-1,d5 ; overflow
+	MOVEF.W (sine_table_length2/2)-1,d5 ; overflow 180°
 	add.w	sp_stripes_y_angle_speed(a3),d0 ; next y angle
 	and.w	d5,d0			; remove overflow
 	move.w	d0,sp_stripes_y_angle(a3) 
@@ -1545,10 +1576,11 @@ sp_get_stripes_y_coords_loop
 	swap	d0
 	add.w	d4,d0			; y' + y center
 	move.w	d0,(a1)+		; y position
-	addq.w	#sp_stripes_y_angle_step,d2 ; next y angle
+	addq.w	#sp_stripes_y_angle_step,d2
 	and.w	d5,d2			; remove overflow
 	dbf	d7,sp_get_stripes_y_coords_loop
 	rts
+
 
 	CNOP 0,4
 tb_set_background_bars
@@ -1570,7 +1602,7 @@ tb_set_background_bars_skip1
 	move.l	a5,a1			; pointer BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_background_bars_loop2
-	move.l	(a0)+,d0		; bits 0-15: y position, bits 16-31: z vector
+	move.l	(a0)+,d0		; bits 0..15: y position, bits 16..31: z vector
 	bpl.s	tb_set_background_bars_skip2
 	add.l	d4,a1			; skip switch values
 	bra	tb_set_background_bars_skip3
@@ -1585,6 +1617,7 @@ tb_set_background_bars_skip4
 	dbf	d7,tb_set_background_bars_loop1
 	movem.l	(a7)+,a4-a6
 	rts
+
 
 	CNOP 0,4
 make_striped_bar
@@ -1610,7 +1643,7 @@ make_striped_bar
 	move.w	#cl2_extension1_size,a2
 	moveq	#(ssb_bar_height)-1,d7
 make_striped_bar_loop
-	move.b	(a0)+,d0		; BPLAM value
+	move.b	(a0)+,d0		; BPLAM
 	move.b	d0,(a1)			; BPLCON4 high
 	move.b	d0,4(a1)
 	move.b	d0,8(a1)
@@ -1659,6 +1692,7 @@ make_striped_bar_loop
 	dbf	d7,make_striped_bar_loop
 	rts
 
+
 	CNOP 0,4
 tb_set_foreground_bars
 	movem.l	a4-a6,-(a7)
@@ -1679,13 +1713,13 @@ tb_set_foreground_bars_skip1
 	move.l	a5,a1			; pointer BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_foreground_bars_loop2
-	move.l	(a0)+,d0		; bits 0-15: y positions, bits 16-31: z vector
+	move.l	(a0)+,d0		; bits 0..15: y positions, bits 16..31: z vector
 	bmi.s	tb_set_foreground_bars_skip2
 	add.l	d4,a1			; skip switch values
 	bra	tb_set_foreground_bars_skip3
 	CNOP 0,4
 tb_set_foreground_bars_skip2
-	lea	(a2,d0.w*4),a4		; + y offset
+	lea	(a2,d0.w*4),a4		; add y offset
 	COPY_TWISTED_BAR.B tb,cl2,extension1,bar_height
 tb_set_foreground_bars_skip3
 	dbf	d6,tb_set_foreground_bars_loop2
@@ -1694,6 +1728,7 @@ tb_set_foreground_bars_skip4
 	dbf	d7,tb_set_foreground_bars_loop1
 	movem.l	(a7)+,a4-a6
 	rts
+
 
 	CNOP 0,4
 sp_make_color_offsets_table
@@ -1711,6 +1746,7 @@ sp_make_color_offsets_table_loop2
 	dbf	d7,sp_make_color_offsets_table_loop1
 	rts
 
+
 	CNOP 0,4
 sp_make_pattern
 	move.w	#RB_NIBBLES_MASK,d3
@@ -1724,9 +1760,9 @@ sp_make_pattern
 	moveq	#ssb_bar_height-1,d7
 sp_make_pattern_loop
 	move.w	(a0)+,d0		; color offset
-	move.w	(a1,d0.w*4),(a2)	; COLOR00 high bits
+	move.w	(a1,d0.w*4),(a2)	; color high
 	addq.w	#QUADWORD_SIZE,a1	; next color value
-	move.w	WORD_SIZE-QUADWORD_SIZE(a1,d0.w*4),cl1_COLOR00_low1-cl1_COLOR00_high1(a2) ; COLOR00 low bits
+	move.w	WORD_SIZE-QUADWORD_SIZE(a1,d0.w*4),cl1_COLOR00_low1-cl1_COLOR00_high1(a2) ; color low
 	addq.w	#QUADWORD_SIZE,a2	; next line in cl
 	add.b	d5,d4			; increment color registers counter
 	bne.s	sp_make_pattern_skip
@@ -1735,14 +1771,15 @@ sp_make_pattern_skip
 	dbf	d7,sp_make_pattern_loop
 	rts
 
+
 	CNOP 0,4
 horiz_scrolltext
 	movem.l a4-a5,-(a7)
 	tst.w	hst_enabled(a3)
 	bne.s	horiz_scrolltext_quit
 	bsr.s	horiz_scrolltext_init
-	move.w	#(hst_copy_blit_y_size*64)+(hst_copy_blit_x_size/16),d4 ; BLTSIZE
-	move.w	#hst_text_character_x_restart,d5
+	move.w	#(hst_copy_blit_y_size*64)+(hst_copy_blit_x_size/WORD_BITS),d4 ; BLTSIZE
+	move.w	#hst_text_char_x_restart,d5
 	lea	hst_characters_x_positions(pc),a0
 	lea	hst_characters_image_ptrs(pc),a1
 	move.l	pf1_construction1(a3),a2
@@ -1760,14 +1797,14 @@ horiz_scrolltext_loop
 	lsr.w	#3,d0			; x/8
 	add.l	d3,d0			; x offset
 	WAITBLIT
-	move.l	(a1)+,(a2)		; character image
-	move.l	d0,(a4)			; playfield
-	move.w	d4,(a5)			; start blit
+	move.l	(a1)+,(a2)		; character
+	move.l	d0,(a4)			; playfield write
+	move.w	d4,(a5)			; start blit operation
 	sub.w	hst_horiz_scroll_speed(a3),d2 ; decrease x position
 	bpl.s	horiz_scrolltext_skip1
 	move.l	a0,-(a7)
-	bsr.s	hst_get_new_character_image
-	move.l	d0,-4(a1)		; new character image
+	bsr.s	hst_get_new_char_image
+	move.l	d0,-4(a1)		; new character
 	add.w	d5,d2			; restart x position
 	move.l	(a7)+,a0
 horiz_scrolltext_skip1
@@ -1787,28 +1824,31 @@ horiz_scrolltext_init
 	move.w	#DMAF_BLITHOG+DMAF_SETCLR,DMACON-DMACONR(a6)
 	WAITBLIT
 	move.l	#(BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC)<<16,BLTCON0-DMACONR(a6) ; minterm D=A
-	moveq	#FALSE,d0
-	move.l	d0,BLTAFWM-DMACONR(a6) 	; no mask
-	move.l	#((hst_image_plane_width-hst_text_character_width)<<16)+(pf1_plane_width-hst_text_character_width),BLTAMOD-DMACONR(a6) ; A&D moduli
+	moveq	#-1,d0
+	move.l	d0,BLTAFWM-DMACONR(a6)
+	move.l	#((hst_image_plane_width-hst_text_char_width)<<16)+(pf1_plane_width-hst_text_char_width),BLTAMOD-DMACONR(a6) ; A&D moduli
 	rts
+
 
 	CNOP 0,4
 hst_get_text_softscroll
-	moveq	#hst_text_character_x_size-1,d0
+	moveq	#hst_text_char_x_size-1,d0
 	and.w	(a0),d0			; x position & $f
 	ror.w	#4,d0			; adjust bits
-	or.w	#BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC,d0 ; minterm D=A
+	or.w	#BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC,d0 ; add minterm D=A
 	move.w	d0,hst_text_bltcon0_bits(a3) 
 	rts
 
-	GET_NEW_CHARACTER_IMAGE.W hst,hst_check_control_codes,NORESTART
 
-	CNOP 0,4
-hst_check_control_codes
+	GET_NEW_char_IMAGE.W hst,hst_check_control_codes,NORESTART
+
+
 ; Input
 ; d0.b	ascii code
 ; Result
 ; d0.l	return value: return code
+	CNOP 0,4
+hst_check_control_codes
 	cmp.b	#ASCII_CTRL_P,d0
 	beq.s	hst_pause_scrolltext
 	cmp.b	#ASCII_CTRL_S,d0
@@ -1817,7 +1857,7 @@ hst_check_control_codes
 	CNOP 0,4
 hst_pause_scrolltext
 	clr.w	hst_pause_horiz_scroll_enabled(a3)
-	move.w	#hst_text_delay,hst_text_delay_counter(a3) ; start delay counter
+	move.w	#hst_text_delay,hst_text_delay_counter(a3) ; start counter
 	moveq	#RETURN_OK,d0
 	rts
 	CNOP 0,4
@@ -1831,13 +1871,14 @@ hst_stop_scrolltext
 	clr.w	slbo_active(a3)
 hst_stop_scrolltext_skip
 	clr.w	ccfo_active(a3)
-	move.w	#1,ccfo_delay_counter(a3) ; activate delay counter
+	move.w	#1,ccfo_delay_counter(a3) ; activate counter
 	move.w	#bf_colors_number*3,bf_colors_counter(a3)
 	clr.w	bf_convert_colors_active(a3)
 	clr.w	bfo_active(a3)
 hst_stop_scrolltext_quit
 	moveq	#RETURN_OK,d0
 	rts
+
 
 	CNOP 0,4
 hst_horiz_scroll
@@ -1850,11 +1891,12 @@ hst_horiz_scroll
 	move.w	hst_text_bltcon0_bits(a3),BLTCON0-DMACONR(a6)
 	move.l	a0,BLTAPT-DMACONR(a6)	; source
 	addq.w	#WORD_SIZE,a0		; skip 16 pixel
-	move.l	a0,BLTDPT-DMACONR(a6) 	; target
+	move.l	a0,BLTDPT-DMACONR(a6)	; target
 	move.l	#((pf1_plane_width-hst_horiz_scroll_window_width)<<16)+(pf1_plane_width-hst_horiz_scroll_window_width),BLTAMOD-DMACONR(a6) ; A&D moduli
-	move.w	#(hst_horiz_scroll_blit_y_size*64)+(hst_horiz_scroll_blit_x_size/16),BLTSIZE-DMACONR(a6) ; start blit
+	move.w	#(hst_horiz_scroll_blit_y_size*64)+(hst_horiz_scroll_blit_x_size/WORD_BITS),BLTSIZE-DMACONR(a6)
 hst_horiz_scroll_quit
 	rts
+
 
 	IFNE tb_quick_clear_enabled
 		RESTORE_BLCON4_CHUNKY_SCREEN tb,cl2,construction2,extension1,32
@@ -1869,9 +1911,9 @@ bar_fader_in
 	move.w	bfi_fader_angle(a3),d2
 	move.w	d2,d0
 	ADDF.W	bfi_fader_angle_speed,d0 ; next angle
-	cmp.w	#sine_table_length1/2,d0 ; angle <= 180° ?
+	cmp.w	#sine_table_length1/2,d0 ; 180° ?
 	ble.s	bar_fader_in_skip
-	MOVEF.W sine_table_length1/2,d0	; 180°
+	MOVEF.W sine_table_length1/2,d0
 bar_fader_in_skip
 	move.w	d0,bfi_fader_angle(a3) 
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
@@ -1890,12 +1932,13 @@ bar_fader_in_skip
 	move.l	d0,a4			; increment/decrement green
 	MOVEF.W bf_colors_number-1,d7
 	bsr	bf_rgb8_fader_loop
-	move.w	d6,bf_colors_counter(a3) ; fading finished ?
+	move.w	d6,bf_colors_counter(a3) ; fading-in finished ?
 	bne.s	bar_fader_in_quit
 	move.w	#FALSE,bfi_active(a3)
 bar_fader_in_quit
 	movem.l (a7)+,a4-a6
 	rts
+
 
 	CNOP 0,4
 bar_fader_out
@@ -1905,9 +1948,9 @@ bar_fader_out
 	move.w	bfo_fader_angle(a3),d2
 	move.w	d2,d0
 	ADDF.W	bfo_fader_angle_speed,d0 ; next angle
-	cmp.w	#sine_table_length1/2,d0 ; angle <= 180° ?
+	cmp.w	#sine_table_length1/2,d0 ; 180° ?
 	ble.s	bar_fader_out_skip
-	MOVEF.W sine_table_length1/2,d0	; 180°
+	MOVEF.W sine_table_length1/2,d0
 bar_fader_out_skip
 	move.w	d0,bfo_fader_angle(a3) 
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
@@ -1926,14 +1969,16 @@ bar_fader_out_skip
 	move.l	d0,a4			; increment/decrement green
 	MOVEF.W bf_colors_number-1,d7
 	bsr	bf_rgb8_fader_loop
-	move.w	d6,bf_colors_counter(a3) ; fading finished ?
+	move.w	d6,bf_colors_counter(a3) ; fading-out finished ?
 	bne.s	bar_fader_out_quit
 	move.w	#FALSE,bfo_active(a3)
 bar_fader_out_quit
 	movem.l (a7)+,a4-a6
 	rts
 
+
 	RGB8_COLOR_FADER bf
+
 
 	CNOP 0,4
 bf_convert_colors
@@ -1948,30 +1993,31 @@ bf_convert_colors
 	lea	bf_colors_number*QUADWORD_SIZE(a2),a4 ; end of color table
 	MOVEF.W (bf_colors_number/2)-1,d7
 bf_convert_colors_loop
-	move.l	(a0)+,d0		; RGB8 value bright stripes
+	move.l	(a0)+,d0		; RGB8 bright stripes
 	move.l	d0,d2		
 	RGB8_TO_RGB4_HIGH d0,d1,d5
-	move.w	d0,(a2)+		; COLORxx high bits
+	move.w	d0,(a2)+		; color high
 	RGB8_TO_RGB4_LOW d2,d1,d5
-	move.w	d2,(a2)+		; COLORxx low bits
-	move.l	(a1)+,d3		; RGB8 value dark stripes
+	move.w	d2,(a2)+		; color low
+	move.l	(a1)+,d3		; RGB8 dark stripes
 	move.l	d3,d4		
 	RGB8_TO_RGB4_HIGH d3,d1,d5
-	move.w	d3,(a2)+		; COLORxx high bits
+	move.w	d3,(a2)+		; color high
 	RGB8_TO_RGB4_LOW d4,d1,d5
-	move.w	d4,(a2)+		; COLORxx low bits
+	move.w	d4,(a2)+		; color low
 ; 2nd part of bar backwards
-	move.w	d4,-(a4)		; COLORxx low bits
-	move.w	d3,-(a4)		; COLORxx high bits
-	move.w	d2,-(a4)		; COLORxx low bits
-	move.w	d0,-(a4)		; COLORxx high bits
+	move.w	d4,-(a4)		; color low
+	move.w	d3,-(a4)		; color high
+	move.w	d2,-(a4)		; color low
+	move.w	d0,-(a4)		; color high
 	dbf	d7,bf_convert_colors_loop
-	tst.w	bf_colors_counter(a3)	; fading finished ?
+	tst.w	bf_colors_counter(a3)	; converting finished ?
 	bne.s	bf_convert_colors_quit
 	move.w	#FALSE,bf_convert_colors_active(a3)
 bf_convert_colors_quit
 	move.l	(a7)+,a4
 	rts
+
 
 	CNOP 0,4
 scroll_logo_bottom_in
@@ -1979,7 +2025,7 @@ scroll_logo_bottom_in
 	tst.w	slbi_active(a3)
 	bne.s	scroll_logo_bottom_in_quit
 	move.w	slbi_y_angle(a3),d2
-	cmp.w	#sine_table_length1/4,d2 ; 90° reached ?
+	cmp.w	#sine_table_length1/4,d2 ; 90° ?
 	ble.s	scroll_logo_bottom_in_skip
 	move.w	#FALSE,slbi_active(a3)
 	clr.w	logo_enabled(a3)
@@ -1988,17 +2034,18 @@ scroll_logo_bottom_in
 scroll_logo_bottom_in_skip
 	lea	sine_table1,a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L slb_y_radius*2,d0,d1 	; y'=yr*cos(w)/2^16
+	MULUF.L slb_y_radius*2,d0,d1	; y'=yr*cos(w)/2^16
 	swap	d0
 	add.w	#slb_y_center,d0
 	MOVEF.W lg_image_y_position,d5
 	add.w	d0,d5			; vertical centering
-	addq.w	#slbi_y_angle_speed,d2	; next y angle
+	addq.w	#slbi_y_angle_speed,d2
 	move.w	d2,slbi_y_angle(a3)
 	bsr.s	slb_scroll_logo
 scroll_logo_bottom_in_quit
 	move.l	(a7)+,a4
 	rts
+
 
 	CNOP 0,4
 scroll_logo_bottom_out
@@ -2006,7 +2053,7 @@ scroll_logo_bottom_out
 	tst.w	slbo_active(a3)
 	bne.s	scroll_logo_bottom_out_quit
 	move.w	slbo_y_angle(a3),d2
-	cmp.w	#sine_table_length1/2,d2 ; 180° reached ?
+	cmp.w	#sine_table_length1/2,d2 ; 180° ?
 	ble.s	scroll_logo_bottom_out_skip
 	move.w	#FALSE,slbo_active(a3)
 	bra.s	scroll_logo_bottom_out_quit
@@ -2019,12 +2066,13 @@ scroll_logo_bottom_out_skip
 	add.w	#slb_y_center,d0
 	MOVEF.W lg_image_y_position,d5
 	add.w	d0,d5			; vertical centering
-	addq.w	#slbi_y_angle_speed,d2	; next y angle
+	addq.w	#slbi_y_angle_speed,d2
 	move.w	d2,slbo_y_angle(a3)
 	bsr.s	slb_scroll_logo
 scroll_logo_bottom_out_quit
 	move.l	(a7)+,a4
 	rts
+
 
 	CNOP 0,4
 slb_scroll_logo
@@ -2032,7 +2080,7 @@ slb_scroll_logo
 	MOVEF.W lg_image_y_size,d6
 	add.w	d5,d6			; VSTOP
 	lea	spr_ptrs_display(pc),a2
-	move.w	#spr_x_size2*SHIRES_PIXEL_FACTOR,a4 ; X
+	move.w	#spr_x_size2*SHIRES_PIXEL_FACTOR,a4 ; x
 	moveq	#(spr_used_number/2)-1,d7
 slb_scroll_logo_loop
 	move.w	d4,d0			; HSTART
@@ -2041,14 +2089,15 @@ slb_scroll_logo_loop
 	move.l	(a2)+,a0		; 1st sprite structure
 	move.l	(a2)+,a1		; 2nd sprite structure
 	SET_SPRITE_POSITION_V9 d0,d1,d2,d3
-	move.w	d1,(a0)			; SPRPOS
-	move.w	d1,(a1)			; SPRPOS
+	move.w	d1,(a0)			; SPRxPOS
+	move.w	d1,(a1)			; SPRxPOS
 	add.w	a4,d4			; next x position
-	move.w	d2,spr_pixel_per_datafetch/8(a0) ; SPRCTL
+	move.w	d2,spr_pixel_per_datafetch/8(a0) ; SPRxCTL
 	or.b	#SPRCTLF_ATT,d2
-	move.w	d2,spr_pixel_per_datafetch/8(a1) ; SPRCTL
+	move.w	d2,spr_pixel_per_datafetch/8(a1) ; SPRxCTL
 	dbf	d7,slb_scroll_logo_loop
 	rts
+
 
 	CNOP 0,4
 chunky_columns_fader_in
@@ -2056,7 +2105,7 @@ chunky_columns_fader_in
 	bne.s	chunky_columns_fader_in_quit
 	subq.w	#ccfi_delay_speed,ccfi_delay_counter(a3)
 	bne.s	chunky_columns_fader_in_quit
-	move.w	#ccfi_delay,ccfi_delay_counter(a3) ; reset delay counter
+	move.w	#ccfi_delay,ccfi_delay_counter(a3)
 	move.w	ccfi_start(a3),d1
 	moveq	#(cl2_display_width-1)-1,d2
 	lea	ccf_columns_mask(pc),a0
@@ -2073,7 +2122,7 @@ chunky_columns_fader_in_quit
 ; Fade in from left to right
 	CNOP 0,4
 ccfi_fader_mode_1
-	clr.b	(a0,d1.w)		; state fade in
+	clr.b	(a0,d1.w)		; state: fade in
 	addq.w	#BYTE_SIZE,d1		; bext column
 	cmp.w	d2,d1			; columns faded in ?
 	bgt.s	ccfi_fader_mode_skip
@@ -2082,10 +2131,10 @@ ccfi_fader_mode_1
 ; Fade in from right to left
 	CNOP 0,4
 ccfi_fader_mode_2
-	move.w	d1,d0			; start value
+	move.w	d1,d0			; start
 	neg.w	d0
 	addq.w	#BYTE_SIZE,d1		; next column
-	clr.b	(cl2_display_width-1)-1(a0,d0.w) ; state fade in
+	clr.b	(cl2_display_width-1)-1(a0,d0.w) ; state: fade in
 	cmp.w	d2,d1			; columns faded in ?
 	bgt.s	ccfi_fader_mode_skip
 	move.w	d1,ccfi_start(a3)
@@ -2093,12 +2142,12 @@ ccfi_fader_mode_2
 ; Fade in from left and right simutanleously
 	CNOP 0,4
 ccfi_fader_mode_3
-	clr.b	(a0,d1.w)		; state fade in
-	move.w	d1,d0			; start value
+	clr.b	(a0,d1.w)		; state: fade in
+	move.w	d1,d0			; start
 	neg.w	d0
 	addq.w	#BYTE_SIZE,d1		; next column
 	lsr.w	#1,d2			; columns center
-	clr.b	(cl2_display_width-1)-1(a0,d0.w) ; state fade in
+	clr.b	(cl2_display_width-1)-1(a0,d0.w) ; state: fade in
 	cmp.w	d2,d1			; columns faded in ?
 	bgt.s	ccfi_fader_mode_skip
 	move.w	d1,ccfi_start(a3)
@@ -2106,11 +2155,11 @@ ccfi_fader_mode_3
 ; Fade in from left and right every second column simutanleously
 	CNOP 0,4
 ccfi_fader_mode_4
-	clr.b	(a0,d1.w)		; state fade in
-	move.w	d1,d0			; start value
+	clr.b	(a0,d1.w)		; state: fade in
+	move.w	d1,d0			; start
 	neg.w	d0
 	addq.w	#WORD_SIZE,d1		; column after next
-	clr.b	(cl2_display_width-1)-1(a0,d0.w) ; state fade in
+	clr.b	(cl2_display_width-1)-1(a0,d0.w) ; state: fade in
 	cmp.w	d2,d1			; columns faded in ?
 	bgt.s	ccfi_fader_mode_skip
 	move.w	d1,ccfi_start(a3)
@@ -2126,7 +2175,7 @@ chunky_columns_fader_out
 	bne.s	chunky_columns_fader_out_quit
 	subq.w	#ccfo_delay_speed,ccfo_delay_counter(a3)
 	bne.s	chunky_columns_fader_out_quit
-	move.w	#ccfo_delay,ccfo_delay_counter(a3) ; reset delay counter
+	move.w	#ccfo_delay,ccfo_delay_counter(a3)
 	move.w	ccfo_start(a3),d1
 	moveq	#(cl2_display_width-1)-1,d2
 	lea	ccf_columns_mask(pc),a0
@@ -2143,7 +2192,7 @@ chunky_columns_fader_out_quit
 ; Fade out from left to right
 	CNOP 0,4
 ccfo_fader_mode_1
-	move.b	#FALSE,(a0,d1.w)	; state fade out
+	move.b	#FALSE,(a0,d1.w)	; state: fade out
 	addq.w	#BYTE_SIZE,d1		; next column
 	cmp.w	d2,d1			; columns faded out ?
 	bgt.s	ccfo_fader_mode_skip
@@ -2152,10 +2201,10 @@ ccfo_fader_mode_1
 ; Fade out from right to left
 	CNOP 0,4
 ccfo_fader_mode_2
-	move.w	d1,d0			; start value
+	move.w	d1,d0			; start
 	neg.w	d0
 	addq.w	#BYTE_SIZE,d1		; next column
-	move.b	#FALSE,(cl2_display_width-1)-1(a0,d0.w) ; state fade out
+	move.b	#FALSE,(cl2_display_width-1)-1(a0,d0.w) ; state: fade out
 	cmp.w	d2,d1			; columns faded out ?
 	bgt.s	ccfo_fader_mode_skip
 	move.w	d1,ccfo_start(a3)
@@ -2163,12 +2212,12 @@ ccfo_fader_mode_2
 ; Fade out from left to right simutaneously
 	CNOP 0,4
 ccfo_fader_mode_3
-	move.b	#FALSE,(a0,d1.w)	; state fade out
-	move.w	d1,d0			; start value
+	move.b	#FALSE,(a0,d1.w)	; state: fade out
+	move.w	d1,d0			; start
 	neg.w	d0
 	addq.w	#BYTE_SIZE,d1		; next column
 	lsr.w	#1,d2			; columns center
-	move.b	#FALSE,(cl2_display_width-1)-1(a0,d0.w) ; state fade out
+	move.b	#FALSE,(cl2_display_width-1)-1(a0,d0.w) ; state: fade out
 	cmp.w	d2,d1			; columns faded out ?
 	bgt.s	ccfo_fader_mode_skip
 	move.w	d1,ccfo_start(a3)
@@ -2176,11 +2225,11 @@ ccfo_fader_mode_3
 ; Fade in from left and right every second column simutanleously
 	CNOP 0,4
 ccfo_fader_mode_4
-	move.b	#FALSE,(a0,d1.w)	; state fade out
-	move.w	d1,d0			; start value
+	move.b	#FALSE,(a0,d1.w)	; state: fade out
+	move.w	d1,d0			; start
 	neg.w	d0
-	addq.w	#WORD_SIZE,d1		; übernächste Spalte
-	move.b	#FALSE,(cl2_display_width-1)-1(a0,d0.w) ; state fade out
+	addq.w	#WORD_SIZE,d1		; column after next
+	move.b	#FALSE,(cl2_display_width-1)-1(a0,d0.w) ; state: fade out
 	cmp.w	d2,d1			; columns faded out ?
 	bgt.s	ccfo_fader_mode_skip
 	move.w	d1,ccfo_start(a3)
@@ -2190,6 +2239,7 @@ ccfo_fader_mode_skip
 	move.w	#FALSE,ccfo_active(a3)
 	rts
 
+
 	CNOP 0,4
 rgb8_colors_fader_cross
 	movem.l a4-a6,-(a7)
@@ -2197,10 +2247,10 @@ rgb8_colors_fader_cross
 	bne.s	rgb8_colors_fader_cross_quit
 	move.w	cfc_rgb8_fader_angle(a3),d2
 	move.w	d2,d0
-	ADDF.W	cfc_rgb8_fader_angle_speed,d0 ; next angle
-	cmp.w	#sine_table_length1/2,d0 ; angle <= 180° ?
+	ADDF.W	cfc_rgb8_fader_angle_speed,d0
+	cmp.w	#sine_table_length1/2,d0 ; 180° ?
 	ble.s	rgb8_colors_fader_cross_skip
-	MOVEF.W sine_table_length1/2,d0	; 180°
+	MOVEF.W sine_table_length1/2,d0
 rgb8_colors_fader_cross_skip
 	move.w	d0,cfc_rgb8_fader_angle(a3) 
 	MOVEF.W cfc_rgb8_colors_number*3,d6 ; RGB counter
@@ -2222,14 +2272,16 @@ rgb8_colors_fader_cross_skip
 	move.l	d0,a4			; increment/decrement green
 	MOVEF.W cfc_rgb8_colors_number-1,d7
 	bsr	cfc_rgb8_fader_loop
-	move.w	d6,cfc_rgb8_colors_counter(a3) ; fading finished ?
+	move.w	d6,cfc_rgb8_colors_counter(a3) ; cross-fading finished ?
 	bne.s	rgb8_colors_fader_cross_quit
 	move.w	#FALSE,cfc_rgb8_active(a3)
 rgb8_colors_fader_cross_quit
 	movem.l (a7)+,a4-a6
 	rts
 
+
 	RGB8_COLOR_FADER cfc
+
 
 	CNOP 0,4
 cfc_rgb8_copy_color_table
@@ -2253,32 +2305,32 @@ cfc_rgb8_copy_color_table
 	ENDC
 	MOVEF.W cfc_rgb8_colors_number-1,d7
 cfc_rgb8_copy_color_table_loop
-	move.l	(a0)+,d0		; RGB8 value
+	move.l	(a0)+,d0		; RGB8
 	move.l	d0,d2	
 	RGB8_TO_RGB4_HIGH d0,d1,d3
-	move.w	d0,(a1)			; COLORxx high bits
+	move.w	d0,(a1)			; color high
 	IFNE cl1_size1
-		move.w	d0,(a2)		; COLORxx high bits
+		move.w	d0,(a2)		; color high
 	ENDC
 	IFNE cl1_size2
-		move.w	d0,(a4)		; COLORxx high bits
+		move.w	d0,(a4)		; color high
 	ENDC
 	RGB8_TO_RGB4_LOW d2,d1,d3
-	move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a1) ; COLORxx low bits
+	move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a1) ; color low
 	addq.w	#QUADWORD_SIZE,a1	; next color register
 	IFNE cl1_size1
-		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a2) ; COLORxx low bits
+		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a2) ; color low
 		addq.w	#QUADWORD_SIZE,a2 ; next color register
 	ENDC
 	IFNE cl1_size2
-		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a4) ; COLORxx low bits
+		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a4) ; color low
 		addq.w	#QUADWORD_SIZE,a4 ; next color register
 	ENDC
 	addq.b	#2,d4			; increment color registers counter
 	cmp.b	#cfc_rgb8_colors_per_bank-1,d4
 	ble.s	cfc_rgb8_copy_color_table_skip
 	and.b	#cfc_rgb8_colors_per_bank-1,d4
-	addq.w	#LONGWORD_SIZE,a1 	; skip CMOVE
+	addq.w	#LONGWORD_SIZE,a1	; skip CMOVE
 	IFNE cl1_size1
 		addq.w	#LONGWORD_SIZE,a2 ; skip CMOVE
 	ENDC
@@ -2287,7 +2339,7 @@ cfc_rgb8_copy_color_table_loop
 	ENDC
 cfc_rgb8_copy_color_table_skip
 	dbf	d7,cfc_rgb8_copy_color_table_loop
-	tst.w	cfc_rgb8_colors_counter(a3) ; fading finished ?
+	tst.w	cfc_rgb8_colors_counter(a3) ; cross-fading finished ?
 	bne.s	cfc_rgb8_copy_color_table_quit
 	move.w	#FALSE,cfc_rgb8_copy_colors_active(a3)
 	move.w	#cfc_rgb8_fader_delay,cfc_rgb8_fader_delay_counter(a3)
@@ -2300,6 +2352,7 @@ cfc_rgb8_copy_color_table_quit
 		move.l	(a7)+,a4
 	ENDC
 	rts
+
 
 	CNOP 0,4
 control_counters
@@ -2348,6 +2401,7 @@ control_counters_skip7
 	move.w	d0,quit_delay_counter(a3)
 control_counters_quit
 	rts
+
 
 	CNOP 0,4
 mouse_handler
@@ -2510,9 +2564,11 @@ pf1_rgb8_color_table
 	DS.L pf1_colors_number-2
 	DC.L color255_bits
 
+
 	CNOP 0,4
 spr_ptrs_display
 	DS.L spr_number
+
 
 	CNOP 0,4
 sine_table1
@@ -2532,7 +2588,6 @@ sine_table2
 	IFD PROTRACKER_VERSION_2 
 		INCLUDE "music-tracker/pt2-period-table.i"
 	ENDC
-
 	IFD PROTRACKER_VERSION_3
 		INCLUDE "music-tracker/pt3-period-table.i"
 	ENDC
@@ -2542,6 +2597,7 @@ sine_table2
 	INCLUDE "music-tracker/pt-sample-starts-table.i"
 
 	INCLUDE "music-tracker/pt-finetune-starts-table.i"
+
 
 ; Volume-Meter
 	CNOP 0,2
@@ -2560,14 +2616,16 @@ vm_audio_channel3_info
 vm_audio_channel4_info
 	DS.B audio_channel_info_size
 
+
 ; Twisted-Bars
 	CNOP 0,4
 tb_colorfradients
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Bars-Colorgradient.ct"
+	INCLUDE "FlexiTwister:colortables/Bars-Colorgradient.ct"
 
 	CNOP 0,4
 tb_yz_coords
 	DS.W tb_bars_number*(cl2_display_width-1)*2
+
 
 ; Striped-Pattern
 	CNOP 0,2
@@ -2577,6 +2635,7 @@ sp_stripes_y_coords
 	CNOP 0,2
 sp_color_offsets_table
 	DS.W sp_stripe_height*sp_stripes_number
+
 
 ; Horiz-Scrolltext
 hst_ascii
@@ -2596,10 +2655,11 @@ hst_characters_x_positions
 hst_characters_image_ptrs
 	DS.L hst_text_characters_number
 
+
 ; Bar-Fader
 	CNOP 0,4
 bfi_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Striped-Bar-Colorgradient.ct"
+	INCLUDE "FlexiTwister:colortables/Striped-Bar-Colorgradient.ct"
 
 	CNOP 0,4
 bfo_color_table
@@ -2613,16 +2673,18 @@ bf_color_cache
 		DC.L color00_bits
 	ENDR
 
+
 ; Columns_fader
 ccf_columns_mask
 	REPT cl2_display_width-1
 		DC.B FALSE
 	ENDR
 
+
 ; Color-Fader-Cross / Horiz-Scrolltext
 	CNOP 0,4
 cfc_rgb8_color_table
-	INCLUDE "Daten:Asm-Sources.AGA/projects/FlexiTwister/colortables/Font-Colorgradient.ct"
+	INCLUDE "FlexiTwister:colortables/Font-Colorgradient.ct"
 
 
 	INCLUDE "sys-variables.i"
@@ -2636,7 +2698,7 @@ cfc_rgb8_color_table
 
 ; Horiz-Scrolltext
 hst_text
-	REPT hst_text_characters_number/(hst_origin_character_x_size/hst_text_character_x_size)
+	REPT hst_text_characters_number/(hst_origin_char_x_size/hst_text_char_x_size)
 		DC.B " "
 	ENDR
 	DC.B " 3               2               1                           "
@@ -2644,7 +2706,7 @@ hst_restart_text
 	DC.B " RESISTANCE PRESENTS THEIR CONTRIBUTION TO                  GERP 2025      ",ASCII_CTRL_P
 	DC.B "                CALLED                   *FLEXI TWISTER*   ",ASCII_CTRL_P," "
 
-	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
+	REPT (hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size)
 		DC.B " "
 	ENDR
 
@@ -2659,7 +2721,7 @@ hst_restart_text
 	DC.B "*TEK*                     "
 	DC.B "*WANTED TEAM*           "
 
-	REPT (hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size)
+	REPT (hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size)
 		DC.B " "
 	ENDR
 
@@ -2668,7 +2730,7 @@ hst_restart_text
 	DC.B "GRAPHICS                      >OPTIC<       ",ASCII_CTRL_P,"             AND"
 	DC.B "                      >GRASS<       ",ASCII_CTRL_P,"           "
 hst_stop_text
-	REPT ((hst_text_characters_number)/(hst_origin_character_x_size/hst_text_character_x_size))+1
+	REPT ((hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1
 		DC.B " "
 	ENDR
 	DC.B ASCII_CTRL_S," "
@@ -2684,28 +2746,28 @@ hst_stop_text
 	EVEN
 
 
-; audio data
+; Audio data
 
 ; PT-Replay
 	IFEQ pt_split_module_enabled
-pt_auddata SECTION pt_audio,DATA
-		INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/modules/MOD.CatchyTune2ReRemix.song"
-pt_audsmps SECTION pt_audio2,DATA_C
-		INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/modules/MOD.CatchyTune2ReRemix.smps"
+pt_auddata			SECTION pt_audio,DATA
+		INCBIN "FlexiTwister:modules/MOD.CatchyTune2ReRemix.song"
+pt_audsmps			SECTION pt_audio2,DATA_C
+		INCBIN "FlexiTwister:modules/MOD.CatchyTune2ReRemix.smps"
 	ELSE
-pt_auddata SECTION pt_audio,DATA_C
-		INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/modules/mod.CatchyTune2ReRemix"
+pt_auddata			SECTION pt_audio,DATA_C
+		INCBIN "FlexiTwister:modules/mod.CatchyTune2ReRemix"
 	ENDC
 
 
-; graphics data
+; Gfx data
 
 ; Horiz-Scrolltext
-hst_image_data SECTION hst_gfx,DATA_C
-	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/fonts/16x16x2-Font.rawblit"
+hst_image_data			SECTION hst_gfx,DATA_C
+	INCBIN "FlexiTwister:fonts/16x16x2-Font.rawblit"
 
 ; Logo
-lg_image_data SECTION lg_gfx,DATA
-	INCBIN "Daten:Asm-Sources.AGA/projects/FlexiTwister/graphics/256x54x8x2-RSE-Logo.rawblit"
+lg_image_data			SECTION lg_gfx,DATA
+	INCBIN "FlexiTwister:graphics/256x54x8x2-RSE-Logo.rawblit"
 
 	END
