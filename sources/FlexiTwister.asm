@@ -165,7 +165,7 @@ requires_060_cpu		EQU FALSE
 requires_fast_memory		EQU FALSE
 requires_multiscan_monitor	EQU FALSE
 
-workbench_start_enabled		EQU FALSE
+workbench_start_enabled		EQU TRUE
 screen_fader_enabled		EQU TRUE
 text_output_enabled		EQU FALSE
 
@@ -1390,8 +1390,9 @@ horiz_scroll_logo_stop
 	move.w	hsl_stop_x_angle(a3),d2
 	cmp.w	#sine_table_length2/4,d2 ; 90° ?
 	bgt.s   horiz_scroll_logo_stop_skip
-	move.w	#FALSE,hsl_stop_active(a3)
-	move.w	#FALSE,hsl_active(a3)	; stop logo movement
+	moveq	#FALSE,d0
+	move.w	d0,hsl_stop_active(a3)
+	move.w	d0,hsl_active(a3)	; stop logo movement
 	rts
 	CNOP 0,4
 horiz_scroll_logo_stop_skip
@@ -1433,12 +1434,12 @@ horiz_scroll_logo_loop
 	move.l	(a2)+,a0		; first sprite structure
 	move.l	(a2)+,a1		; second sprite structure
 	SET_SPRITE_POSITION d0,d1,d2
-	move.w	d1,(a0)			; SPRPOS
-	move.w	d1,(a1)			; SPRPOS
+	move.w	d1,(a0)			; SPRxPOS
+	move.w	d1,(a1)			; SPRxPOS
 	add.w	d6,d3			; next dprite x position
-	move.w	d2,spr_pixel_per_datafetch/8(a0) ; SPRCTL
+	move.w	d2,spr_pixel_per_datafetch/8(a0) ; SPRxCTL
 	or.b	#SPRCTLF_ATT,d2
-	move.w	d2,spr_pixel_per_datafetch/8(a1) ; SPRCTL
+	move.w	d2,spr_pixel_per_datafetch/8(a1) ; SPRxCTL
 	dbf	d7,horiz_scroll_logo_loop
 horiz_scroll_logo_quit
 	rts
