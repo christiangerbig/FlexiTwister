@@ -4,4 +4,4 @@ You also need these folders in conjunction with the project:
 
 [include 3.5](https://github.com/christiangerbig/include-3.5)
 
-[cusom includes for AGA](https://github.com/christiangerbig/custom-includes-aga)
+[custom includes for AGA](https://github.com/christiangerbig/custom-includes-aga)
