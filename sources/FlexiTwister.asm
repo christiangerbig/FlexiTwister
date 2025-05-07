@@ -21,7 +21,7 @@
 
 ; V.1.3 beta
 ; - Convert-Color-Table of the bar is already called at the inits, so that
-;   the color values of the bar are displayed correctly at the beginning
+; the color values of the bar are displayed correctly at the beginning
 ; - background color is now 100% global and changed
 ; - code optimized
 ; - mouse handler: out-fader stops in-fader if necessary
@@ -1590,7 +1590,7 @@ tb_set_background_bars
 	lea	tb_yz_coords(pc),a0
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
-	move.l	extra_memory(a3),a5	; pointer BPLAM table
+	move.l	extra_memory(a3),a5	; BPLAM table
 	lea	ccf_columns_mask(pc),a6
 	moveq	#(cl2_display_width-1)-1,d7
 tb_set_background_bars_loop1
@@ -1600,7 +1600,7 @@ tb_set_background_bars_loop1
 	bra	tb_set_background_bars_skip4
 	CNOP 0,4
 tb_set_background_bars_skip1
-	move.l	a5,a1			; pointer BPLAM table
+	move.l	a5,a1			; BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_background_bars_loop2
 	move.l	(a0)+,d0		; low word: y position, high word: z vector
@@ -1701,7 +1701,7 @@ tb_set_foreground_bars
 	lea	tb_yz_coords(pc),a0
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
-	move.l	extra_memory(a3),a5	; pointer BPLAM table
+	move.l	extra_memory(a3),a5	; BPLAM table
 	lea	ccf_columns_mask(pc),a6
 	moveq	#(cl2_display_width-1)-1,d7
 tb_set_foreground_bars_loop1
@@ -1711,7 +1711,7 @@ tb_set_foreground_bars_loop1
 	bra	tb_set_foreground_bars_skip4
 	CNOP 0,4
 tb_set_foreground_bars_skip1
-	move.l	a5,a1			; pointer BPLAM table
+	move.l	a5,a1			; BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_foreground_bars_loop2
 	move.l	(a0)+,d0		; low word: y positions, high word: z vector
