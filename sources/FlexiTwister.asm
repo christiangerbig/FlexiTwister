@@ -7,7 +7,7 @@
 ; History/Changes
 
 ; V.1.0 beta
-; - first release
+; - 1st release
 
 ; V.1.1 beta
 ; - direction change of the striped bar triggered by module
@@ -1431,8 +1431,8 @@ horiz_scroll_logo_loop
 	move.w	d3,d0			; HSTART
 	move.w	d4,d1			; VSTART
 	move.w	d5,d2			; VSTOP
-	move.l	(a2)+,a0		; first sprite structure
-	move.l	(a2)+,a1		; second sprite structure
+	move.l	(a2)+,a0		; 1st sprite structure
+	move.l	(a2)+,a1		; 2nd sprite structure
 	SET_SPRITE_POSITION d0,d1,d2
 	move.w	d1,(a0)			; SPRxPOS
 	move.w	d1,(a1)			; SPRxPOS
@@ -1795,7 +1795,7 @@ horiz_scrolltext_loop
 	moveq	#0,d0
 	move.w	(a0),d0			; x
 	move.w	d0,d2		
-	lsr.w	#3,d0			; x/8
+	lsr.w	#3,d0			; byte offset
 	add.l	d3,d0			; x offset
 	WAITBLIT
 	move.l	(a1)+,(a2)		; character
@@ -1892,7 +1892,7 @@ hst_horiz_scroll
 	move.w	hst_text_bltcon0_bits(a3),BLTCON0-DMACONR(a6)
 	move.l	a0,BLTAPT-DMACONR(a6)	; source
 	addq.w	#WORD_SIZE,a0		; skip 16 pixel
-	move.l	a0,BLTDPT-DMACONR(a6)	; target
+	move.l	a0,BLTDPT-DMACONR(a6)	; destination
 	move.l	#((pf1_plane_width-hst_horiz_scroll_window_width)<<16)+(pf1_plane_width-hst_horiz_scroll_window_width),BLTAMOD-DMACONR(a6) ; A&D moduli
 	move.w	#(hst_horiz_scroll_blit_y_size*64)+(hst_horiz_scroll_blit_x_size/WORD_BITS),BLTSIZE-DMACONR(a6)
 hst_horiz_scroll_quit
@@ -1924,7 +1924,7 @@ bar_fader_in_skip
 	swap	d0
 	ADDF.W	bfi_fader_center,d0
 	lea	bf_color_cache+(bf_color_table_offset*LONGWORD_SIZE)(pc),a0 ; color values buffer
-	lea	bfi_color_table+(bf_color_table_offset*LONGWORD_SIZE)(pc),a1 ; target color values
+	lea	bfi_color_table+(bf_color_table_offset*LONGWORD_SIZE)(pc),a1 ; destination color values
 	move.w	d0,a5			; increment/decrement blue
 	swap	d0
 	clr.w	d0
@@ -1961,7 +1961,7 @@ bar_fader_out_skip
 	swap	d0
 	ADDF.W	bfo_fader_center,d0
 	lea	bf_color_cache+(bf_color_table_offset*LONGWORD_SIZE)(pc),a0 ; color values buffer
-	lea	bfo_color_table+(bf_color_table_offset*LONGWORD_SIZE)(pc),a1 ; target color values
+	lea	bfo_color_table+(bf_color_table_offset*LONGWORD_SIZE)(pc),a1 ; destination color values
 	move.w	d0,a5			; increment/decrement blue
 	swap	d0
 	clr.w	d0
@@ -2153,7 +2153,7 @@ ccfi_fader_mode_3
 	bgt.s	ccfi_fader_mode_skip
 	move.w	d1,ccfi_start(a3)
 	rts
-; Fade in from left and right every second column simutanleously
+; Fade in from left and right every 2nd column simutanleously
 	CNOP 0,4
 ccfi_fader_mode_4
 	clr.b	(a0,d1.w)		; state: fade in
@@ -2223,7 +2223,7 @@ ccfo_fader_mode_3
 	bgt.s	ccfo_fader_mode_skip
 	move.w	d1,ccfo_start(a3)
 	rts
-; Fade in from left and right every second column simutanleously
+; Fade in from left and right every 2nd column simutanleously
 	CNOP 0,4
 ccfo_fader_mode_4
 	move.b	#FALSE,(a0,d1.w)	; state: fade out
@@ -2261,7 +2261,7 @@ rgb8_colors_fader_cross_skip
 	swap	d0
 	ADDF.W	cfc_rgb8_fader_center,d0
 	lea	pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; color values buffer
-	lea	cfc_rgb8_color_table(pc),a1 ; target color values
+	lea	cfc_rgb8_color_table(pc),a1 ; destination color values
 	move.w	cfc_rgb8_color_table_start(a3),d1
 	MULUF.W 8,d1			; * 64 = offset in color table
 	lea	(a1,d1.w*8),a1
