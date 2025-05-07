@@ -1,4 +1,4 @@
-An AGA Resistance production released on Gerp 2025
+An AGA Resistance production released at Gerp 2025 [ranked #2](https://www.pouet.net/prod.php?which=103414)
 
 You also need these folders in conjunction with the project:
 
