@@ -1798,7 +1798,7 @@ horiz_scrolltext_loop
 	lsr.w	#3,d0			; byte offset
 	add.l	d3,d0			; x offset
 	WAITBLIT
-	move.l	(a1)+,(a2)		; character
+	move.l	(a1)+,(a2)		; character image
 	move.l	d0,(a4)			; playfield write
 	move.w	d4,(a5)			; start blit operation
 	sub.w	hst_horiz_scroll_speed(a3),d2 ; decrease x position
