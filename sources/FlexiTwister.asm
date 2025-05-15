@@ -400,7 +400,7 @@ hst_horiz_scroll_speed1		EQU 2
 hst_horiz_scroll_speed2		EQU 8
 
 hst_text_char_x_restart		EQU hst_horiz_scroll_window_x_size
-hst_text_characters_number	EQU hst_horiz_scroll_window_x_size/hst_text_char_x_size
+hst_text_chars_number	EQU hst_horiz_scroll_window_x_size/hst_text_char_x_size
 
 hst_text_x_position		EQU 0
 hst_text_y_position		EQU (pf1_y_size3-hst_text_char_y_size)/2
@@ -484,7 +484,7 @@ ccfo_delay_speed		EQU 1
 ccfo_delay			EQU 1
 
 ; Main
-quit_delay			EQU (hst_origin_char_x_size*(((hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1))/hst_horiz_scroll_speed2
+quit_delay			EQU (hst_origin_char_x_size*(((hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1))/hst_horiz_scroll_speed2
 
 
 color_step1			EQU 256/(tb_bar_height/2)
@@ -1067,9 +1067,9 @@ init_main
 	bsr	tb_init_mirror_bplam_table
 	bsr	get_channels_amplitudes
 	bsr	ssb_init_bplam_table
-	bsr	hst_init_characters_offsets
-	bsr	hst_init_characters_x_positions
-	bsr	hst_init_characters_images
+	bsr	hst_init_chars_offsets
+	bsr	hst_init_chars_x_positions
+	bsr	hst_init_chars_images
 	bsr	bf_init_color_table
 	bsr	init_sprites
 	bsr	init_CIA_timers
@@ -1143,11 +1143,11 @@ tb_init_color_table_loop
 	INIT_BPLAM_TABLE.B ssb,color_values_number1*segments_number1*2,2,color_values_number2*2,extra_memory,a3,em_bplam_table2
 
 ; Horiz-Scrolltext
-	INIT_CHARACTERS_OFFSETS.W hst
+	INIT_CHARS_OFFSETS.W hst
 
-	INIT_CHARACTERS_X_POSITIONS hst,LORES
+	INIT_CHARS_X_POSITIONS hst,LORES
 
-	INIT_CHARACTERS_IMAGES hst
+	INIT_CHARS_IMAGES hst
 
 
 ; Bar-Fader
@@ -1603,7 +1603,7 @@ tb_set_background_bars_skip1
 	move.l	a5,a1			; BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_background_bars_loop2
-	move.l	(a0)+,d0		; low word: y position, high word: z vector
+	move.l	(a0)+,d0	 	; low word: y, high word: z vector
 	bpl.s	tb_set_background_bars_skip2
 	add.l	d4,a1			; skip switch values
 	bra	tb_set_background_bars_skip3
@@ -1714,7 +1714,7 @@ tb_set_foreground_bars_skip1
 	move.l	a5,a1			; BPLAM table
 	moveq	#tb_bars_number-1,d6
 tb_set_foreground_bars_loop2
-	move.l	(a0)+,d0		; low word: y positions, high word: z vector
+	move.l	(a0)+,d0	 	; low word: y, high word: z vector
 	bmi.s	tb_set_foreground_bars_skip2
 	add.l	d4,a1			; skip switch values
 	bra	tb_set_foreground_bars_skip3
@@ -1781,8 +1781,8 @@ horiz_scrolltext
 	bsr.s	horiz_scrolltext_init
 	move.w	#(hst_copy_blit_y_size*64)+(hst_copy_blit_x_size/WORD_BITS),d4 ; BLTSIZE
 	move.w	#hst_text_char_x_restart,d5
-	lea	hst_characters_x_positions(pc),a0
-	lea	hst_characters_image_ptrs(pc),a1
+	lea	hst_chars_x_positions(pc),a0
+	lea	hst_chars_image_ptrs(pc),a1
 	move.l	pf1_construction1(a3),a2
 	move.l	(a2),d3
 	add.l	#(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),d3 ; vertical centering
@@ -1790,7 +1790,7 @@ horiz_scrolltext
 	lea	BLTDPT-DMACONR(a6),a4
 	lea	BLTSIZE-DMACONR(a6),a5
 	bsr.s	hst_get_text_softscroll
-	moveq	#hst_text_characters_number-1,d7
+	moveq	#hst_text_chars_number-1,d7
 horiz_scrolltext_loop
 	moveq	#0,d0
 	move.w	(a0),d0			; x
@@ -1822,9 +1822,9 @@ horiz_scrolltext_quit
 	rts
 	CNOP 0,4
 horiz_scrolltext_init
-	move.w	#DMAF_BLITHOG+DMAF_SETCLR,DMACON-DMACONR(a6)
+	move.w	#DMAF_BLITHOG|DMAF_SETCLR,DMACON-DMACONR(a6)
 	WAITBLIT
-	move.l	#(BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC)<<16,BLTCON0-DMACONR(a6) ; minterm D=A
+	move.l	#(BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC)<<16,BLTCON0-DMACONR(a6) ; minterm D=A
 	moveq	#-1,d0
 	move.l	d0,BLTAFWM-DMACONR(a6)
 	move.l	#((hst_image_plane_width-hst_text_char_width)<<16)+(pf1_plane_width-hst_text_char_width),BLTAMOD-DMACONR(a6) ; A&D moduli
@@ -1836,7 +1836,7 @@ hst_get_text_softscroll
 	moveq	#hst_text_char_x_size-1,d0
 	and.w	(a0),d0			; x position & $f
 	ror.w	#4,d0			; adjust bits
-	or.w	#BC0F_SRCA+BC0F_DEST+ANBNC+ANBC+ABNC+ABC,d0 ; add minterm D=A
+	or.w	#BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC,d0 ; add minterm D=A
 	move.w	d0,hst_text_bltcon0_bits(a3) 
 	rts
 
@@ -2645,16 +2645,16 @@ hst_ascii_end
 	EVEN
 
 	CNOP 0,2
-hst_characters_offsets
+hst_chars_offsets
 	DS.W hst_ascii_end-hst_ascii
 
 	CNOP 0,2
-hst_characters_x_positions
-	DS.W hst_text_characters_number
+hst_chars_x_positions
+	DS.W hst_text_chars_number
 
 	CNOP 0,4
-hst_characters_image_ptrs
-	DS.L hst_text_characters_number
+hst_chars_image_ptrs
+	DS.L hst_text_chars_number
 
 
 ; Bar-Fader
@@ -2699,7 +2699,7 @@ cfc_rgb8_color_table
 
 ; Horiz-Scrolltext
 hst_text
-	REPT hst_text_characters_number/(hst_origin_char_x_size/hst_text_char_x_size)
+	REPT hst_text_chars_number/(hst_origin_char_x_size/hst_text_char_x_size)
 		DC.B " "
 	ENDR
 	DC.B " 3               2               1                           "
@@ -2707,7 +2707,7 @@ hst_restart_text
 	DC.B " RESISTANCE PRESENTS THEIR CONTRIBUTION TO                  GERP 2025      ",ASCII_CTRL_P
 	DC.B "                CALLED                   *FLEXI TWISTER*   ",ASCII_CTRL_P," "
 
-	REPT (hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size)
+	REPT (hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size)
 		DC.B " "
 	ENDR
 
@@ -2722,7 +2722,7 @@ hst_restart_text
 	DC.B "*TEK*                     "
 	DC.B "*WANTED TEAM*           "
 
-	REPT (hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size)
+	REPT (hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size)
 		DC.B " "
 	ENDR
 
@@ -2731,7 +2731,7 @@ hst_restart_text
 	DC.B "GRAPHICS                      >OPTIC<       ",ASCII_CTRL_P,"             AND"
 	DC.B "                      >GRASS<       ",ASCII_CTRL_P,"           "
 hst_stop_text
-	REPT ((hst_text_characters_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1
+	REPT ((hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1
 		DC.B " "
 	ENDR
 	DC.B ASCII_CTRL_S," "
