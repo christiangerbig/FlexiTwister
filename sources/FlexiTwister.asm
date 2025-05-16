@@ -400,7 +400,7 @@ hst_horiz_scroll_speed1		EQU 2
 hst_horiz_scroll_speed2		EQU 8
 
 hst_text_char_x_restart		EQU hst_horiz_scroll_window_x_size
-hst_text_chars_number	EQU hst_horiz_scroll_window_x_size/hst_text_char_x_size
+hst_text_chars_number		EQU hst_horiz_scroll_window_x_size/hst_text_char_x_size
 
 hst_text_x_position		EQU 0
 hst_text_y_position		EQU (pf1_y_size3-hst_text_char_y_size)/2
