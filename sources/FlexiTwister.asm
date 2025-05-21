@@ -165,7 +165,7 @@ requires_060_cpu		EQU FALSE
 requires_fast_memory		EQU FALSE
 requires_multiscan_monitor	EQU FALSE
 
-workbench_start_enabled		EQU TRUE
+workbench_start_enabled		EQU -1 ;TRUE
 screen_fader_enabled		EQU TRUE
 text_output_enabled		EQU FALSE
 
@@ -183,9 +183,11 @@ pt_track_notes_played_enabled	EQU TRUE
 pt_track_volumes_enabled	EQU FALSE
 pt_track_periods_enabled	EQU TRUE
 pt_track_data_enabled		EQU FALSE
+	IFD PROTRACKER_VERSION_3
 pt_metronome_enabled		EQU FALSE
 pt_metrochanbits		EQU pt_metrochan1
 pt_metrospeedbits		EQU pt_metrospeed4th
+	ENDC
 
 ; Twisted-Bars
 tb_quick_clear_enabled		EQU FALSE
@@ -257,6 +259,7 @@ audio_memory_size		EQU 1*WORD_SIZE
 disk_memory_size		EQU 0
 
 chip_memory_size		EQU 0
+
 	IFEQ pt_ciatiming_enabled
 ciab_cra_bits			EQU CIACRBF_LOAD
 	ENDC
@@ -314,7 +317,7 @@ fmode_bits			EQU FMODEF_SPR32|FMODEF_SPAGEM
 color00_bits			EQU $000011
 color255_bits			EQU color00_bits
 
-cl2_display_x_size		EQU 352+8 ; 45 Spalten
+cl2_display_x_size		EQU 352+8 ; 45 columns
 cl2_display_width		EQU cl2_display_x_size/8
 cl2_display_y_size		EQU visible_lines_number
 	IFEQ open_border_enabled
@@ -867,15 +870,15 @@ sp_stripes_y_angle		RS.W 1
 sp_stripes_y_angle_speed	RS.W 1
 
 ; Horiz-Scrolltext
+hst_active			RS.W 1
 	RS_ALIGN_LONGWORD
 hst_image			RS.L 1
-hst_enabled			RS.W 1
 hst_text_table_start		RS.W 1
 hst_text_BLTCON0_bits		RS.W 1
 hst_char_toggle_image		RS.W 1
 hst_text_y_offset		RS.W 1
 hst_horiz_scroll_speed		RS.W 1
-hst_pause_horiz_scroll_enabled	RS.W 1
+hst_pause_horiz_scroll_active	RS.W 1
 hst_text_delay_counter		RS.W 1
 
 ; Horiz-Scroll-Logo
@@ -931,7 +934,7 @@ ccfo_start			RS.W 1
 ccfo_delay_counter		RS.W 1
 
 ; Main
-logo_enabled			RS.W 1
+logo_active			RS.W 1
 stop_fx_active			RS.W 1
 quit_active			RS.W 1
 quit_delay_counter		RS.W 1
@@ -974,17 +977,17 @@ init_main_variables
 	move.w	#sp_stripes_y_angle_speed1,sp_stripes_y_angle_speed(a3)
 
 ; Horiz-Scrolltext
+	moveq	#FALSE,d1
+	move.w	d1,hst_active(a3)
 	lea	hst_image_data,a0
 	move.l	a0,hst_image(a3)
-	moveq	#FALSE,d1
-	move.w	d1,hst_enabled(a3)
 	move.w	d0,hst_text_table_start(a3)
 	move.w	d0,hst_text_bltcon0_bits(a3)
 	move.w	d0,hst_char_toggle_image(a3)
 	move.w	d0,hst_text_y_offset(a3)
 	moveq	#hst_horiz_scroll_speed1,d2
 	move.w	d2,hst_horiz_scroll_speed(a3)
-	move.w	d1,hst_pause_horiz_scroll_enabled(a3)
+	move.w	d1,hst_pause_horiz_scroll_active(a3)
 	move.w	d1,hst_text_delay_counter(a3) ; delay counter inactive
 
 ; Horiz-Scroll-Logo
@@ -1047,7 +1050,7 @@ init_main_variables
 	move.w	d0,ccfo_delay_counter(a3)
 
 ; Main
-	move.w	d1,logo_enabled(a3)
+	move.w	d1,logo_active(a3)
 	move.w	d1,stop_fx_active(a3)
 	move.w	d1,quit_active(a3)
 	move.w	d1,quit_delay_counter(a3)
@@ -1776,7 +1779,7 @@ sp_make_pattern_skip
 	CNOP 0,4
 horiz_scrolltext
 	movem.l a4-a5,-(a7)
-	tst.w	hst_enabled(a3)
+	tst.w	hst_active(a3)
 	bne.s	horiz_scrolltext_quit
 	bsr.s	horiz_scrolltext_init
 	move.w	#(hst_copy_blit_y_size<<6)+(hst_copy_blit_x_size/WORD_BITS),d4 ; BLTSIZE
@@ -1811,9 +1814,9 @@ horiz_scrolltext_loop
 horiz_scrolltext_skip1
 	move.w	d2,(a0)+		
 	dbf	d7,horiz_scrolltext_loop
-	tst.w	hst_pause_horiz_scroll_enabled(a3)
+	tst.w	hst_pause_horiz_scroll_active(a3)
 	bne.s	horiz_scrolltext_skip2
-	move.w	#FALSE,hst_pause_horiz_scroll_enabled(a3)
+	move.w	#FALSE,hst_pause_horiz_scroll_active(a3)
 	clr.w	hst_horiz_scroll_speed(a3)
 horiz_scrolltext_skip2
 	move.w	#DMAF_BLITHOG,DMACON-DMACONR(a6)
@@ -1857,17 +1860,17 @@ hst_check_control_codes
 	rts
 	CNOP 0,4
 hst_pause_scrolltext
-	clr.w	hst_pause_horiz_scroll_enabled(a3)
+	clr.w	hst_pause_horiz_scroll_active(a3)
 	move.w	#hst_text_delay,hst_text_delay_counter(a3) ; start counter
 	moveq	#RETURN_OK,d0
 	rts
 	CNOP 0,4
 hst_stop_scrolltext
-	move.w	#FALSE,hst_enabled(a3)	; stop text
+	move.w	#FALSE,hst_active(a3)	; stop text
 	tst.w	quit_active(a3)
 	bne.s	hst_stop_scrolltext_quit
 	clr.w	pt_music_fader_active(a3)
-	tst.w	logo_enabled(a3)
+	tst.w	logo_active(a3)
 	bne.s	hst_stop_scrolltext_skip
 	clr.w	slbo_active(a3)
 hst_stop_scrolltext_skip
@@ -1883,7 +1886,7 @@ hst_stop_scrolltext_quit
 
 	CNOP 0,4
 hst_horiz_scroll
-	tst.w	hst_enabled(a3)
+	tst.w	hst_active(a3)
 	bne.s	hst_horiz_scroll_quit
 	move.l	pf1_construction1(a3),a0
 	move.l	(a0),a0
@@ -2029,7 +2032,7 @@ scroll_logo_bottom_in
 	cmp.w	#sine_table_length1/4,d2 ; 90° ?
 	ble.s	scroll_logo_bottom_in_skip
 	move.w	#FALSE,slbi_active(a3)
-	clr.w	logo_enabled(a3)
+	clr.w	logo_active(a3)
 	bra.s	scroll_logo_bottom_in_quit
 	CNOP 0,4
 scroll_logo_bottom_in_skip
@@ -2382,7 +2385,7 @@ control_counters_skip4
 	subq.w	#1,d0
 	bpl.s	control_counters_skip7
 	clr.w	pt_music_fader_active(a3)
-	tst.w	logo_enabled(a3)
+	tst.w	logo_active(a3)
 	bne.s	control_counters_skip5
 	clr.w	slbo_active(a3)
 control_counters_skip5
@@ -2412,7 +2415,7 @@ mouse_handler
 	CNOP 0,4
 mh_exit_demo
 	move.w	#FALSE,pt_effects_handler_active(a3)
-	tst.w	hst_enabled(a3)
+	tst.w	hst_active(a3)
 	bne.s	mh_exit_demo_skip2
 	tst.w	hsl_active(a3)
 	bne.s	mh_exit_demo_skip1
@@ -2501,7 +2504,7 @@ pt_start_bar_fader_in
 	rts
 	CNOP 0,4
 pt_start_scrolltext
-	clr.w	hst_enabled(a3)
+	clr.w	hst_active(a3)
 	rts
 	CNOP 0,4
 pt_start_scroll_logo_bottom_in
@@ -2530,7 +2533,7 @@ pt_stop_horiz_logo_scroll
 	rts
 	CNOP 0,4
 pt_restart_scrolltext
-	clr.w	hst_enabled(a3)
+	clr.w	hst_active(a3)
 	move.w	#hst_restart_text-hst_text,hst_text_table_start(a3) ; skip countdown text
 	rts
 	CNOP 0,4
