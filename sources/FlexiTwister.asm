@@ -165,7 +165,7 @@ requires_060_cpu		EQU FALSE
 requires_fast_memory		EQU FALSE
 requires_multiscan_monitor	EQU FALSE
 
-workbench_start_enabled		EQU -1 ;TRUE
+workbench_start_enabled		EQU TRUE
 screen_fader_enabled		EQU TRUE
 text_output_enabled		EQU FALSE
 
@@ -191,8 +191,8 @@ pt_metrospeedbits		EQU pt_metrospeed4th
 
 ; Twisted-Bars
 tb_quick_clear_enabled		EQU FALSE
-tb_restore_cl_cpu_enabled	EQU TRUE
-tb_restore_cl_blitter_enabled	EQU FALSE
+tb_cpu_restore_cl_enabled	EQU TRUE
+tb_blitter_restore_cl_enabled	EQU FALSE
 
 ; Colors-Fader-Cross
 cfc_rgb8_prefade_enabled	EQU TRUE
@@ -268,7 +268,7 @@ ciaa_ta_time			EQU 0
 ciaa_tb_time			EQU 0
 	IFEQ pt_ciatiming_enabled
 ciab_ta_time			EQU 14187 ; = 0.709379 MHz * [20000 µs = 50 Hz duration for one frame on a PAL machine]
-;ciab_ta_time			EQU 14318 ; = 0.715909 MHz * [20000 µs = 50 Hz duration for one frame on a NTSC machine]
+; ciab_ta_time			EQU 14318 ; = 0.715909 MHz * [20000 µs = 50 Hz duration for one frame on a NTSC machine]
 	ELSE
 ciab_ta_time			EQU 0
 	ENDC
