@@ -327,7 +327,7 @@ cl2_hstart1			EQU display_window_hstart-4
 	ENDC
 cl2_vstart1			EQU MINROW
 cl2_hstart2			EQU 0
-cl2_vstart2			EQU beam_position&$ff
+cl2_vstart2			EQU beam_position&CL_Y_WRAPPING
 
 sine_table_length1		EQU 256
 sine_table_length2		EQU 512
@@ -1253,7 +1253,8 @@ init_second_copperlist
 	bsr.s	cl2_init_copper_interrupt
 	COP_LISTEND
 	bsr	copy_second_copperlist
-	bra	swap_second_copperlist
+	bsr	swap_second_copperlist
+	bra	set_second_copperlist
 
 
 	COP_INIT_BPLCON4_CHUNKY_SCREEN cl2,cl2_hstart1,cl2_vstart1,cl2_display_x_size,cl2_display_y_size,open_border_enabled,tb_quick_clear_enabled,FALSE
@@ -1295,7 +1296,9 @@ cfc_rgb8_init_start_colors
 beam_routines
 	bsr	wait_copint
 	bsr	swap_first_copperlist
+	bsr	set_first_copperlist
 	bsr	swap_second_copperlist
+	bsr	set_second_copperlist
 	bsr	swap_playfield1
 	bsr	set_playfield1
 	bsr	horiz_scrolltext
@@ -1335,7 +1338,13 @@ beam_routines
 	SWAP_COPPERLIST cl1,2
 
 
+	SET_COPPERLIST cl1
+
+
 	SWAP_COPPERLIST cl2,3
+
+
+	SET_COPPERLIST cl2
 
 
 	SWAP_PLAYFIELD pf1,3
