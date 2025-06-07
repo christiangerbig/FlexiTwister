@@ -1309,11 +1309,11 @@ beam_routines
 	bsr	tb_clear_second_copperlist
 	bsr	cl2_update_bpl1dat
 	bsr	bf_convert_colors
-	bsr	sp_get_stripes_y_coords
+	bsr	sp_get_stripes_y_coordinates
 	bsr	sp_make_color_offsets_table
 	bsr	sp_make_pattern
 	bsr	get_channels_amplitudes
-	bsr	tb_get_yz_coords
+	bsr	tb_get_yz_coordinates
 	bsr	tb_set_background_bars
 	bsr	make_striped_bar
 	bsr	tb_set_foreground_bars
@@ -1525,7 +1525,7 @@ get_channel_amplitude_quit
 
 
 	CNOP 0,4
-tb_get_yz_coords
+tb_get_yz_coordinates
 	move.l	a4,-(a7)
 	move.w	vm_audio_channel(a3),d1
 	MULUF.W audio_channel_info_size/WORD_SIZE,d1,d0
@@ -1539,11 +1539,11 @@ tb_get_yz_coords
 	add.b	(vm_audio_channel1_info+aci_yanglestep+1,pc,d1.w*2),d0 ; next y angle step
 	move.w	d0,tb_y_angle_step_angle(a3) 
 	lea	sine_table1(pc),a0
-	lea	tb_yz_coords(pc),a1
+	lea	tb_yz_coordinates(pc),a1
 	move.w	#tb_y_centre,a2
 	move.w	#tb_y_angle_step_centre,a4
 	moveq	#(cl2_display_width-1)-1,d7 ; number of columns
-tb_get_yz_coords_loop1
+tb_get_yz_coordinates_loop1
 	move.l	(a0,d5.w*4),d0		; sin(w)
 	MULUF.L tb_y_angle_step_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
 	swap	d0
@@ -1551,7 +1551,7 @@ tb_get_yz_coords_loop1
 	move.w	d4,d2			; y angle
 	add.b	d0,d4			; next y angle
 	moveq	#tb_bars_number-1,d6
-tb_get_yz_coords_loop2
+tb_get_yz_coordinates_loop2
 	moveq	#-(sine_table_length1/4),d1 ; - 90°
 	move.l	(a0,d2.w*4),d0		; sin(w)
 	add.w	d2,d1			; y angle - 90°
@@ -1563,15 +1563,15 @@ tb_get_yz_coords_loop2
 	MULUF.W cl2_extension1_size/LONGWORD_SIZE,d0,d1 ; y offset in cl
 	move.w	d0,(a1)+		; y position
 	add.b	d3,d2			; y distance to next bar
-	dbf	d6,tb_get_yz_coords_loop2
+	dbf	d6,tb_get_yz_coordinates_loop2
 	addq.b	#tb_y_angle_step_step,d5 ; next y step angle
-	dbf	d7,tb_get_yz_coords_loop1
+	dbf	d7,tb_get_yz_coordinates_loop1
 	move.l	(a7)+,a4
 	rts
 
 
 	CNOP 0,4
-sp_get_stripes_y_coords
+sp_get_stripes_y_coordinates
 	move.w	sp_stripes_y_angle(a3),d2
 	move.w	d2,d0
 	MOVEF.W (sine_table_length2/2)-1,d5 ; overflow 180°
@@ -1581,9 +1581,9 @@ sp_get_stripes_y_coords
 	;moveq	#sp_stripes_y_radius*2,d3
 	moveq	#sp_stripes_y_center,d4
 	lea	sine_table2+((sine_table_length2/4)*LONGWORD_SIZE)(pc),a0
-	lea	sp_stripes_y_coords(pc),a1
+	lea	sp_stripes_y_coordinates(pc),a1
 	MOVEF.W	(sp_stripes_number*sp_stripe_height)-1,d7 ; number of lines
-sp_get_stripes_y_coords_loop
+sp_get_stripes_y_coordinates_loop
 	move.l	(a0,d2.w*4),d0		; cos(w)
 	MULUF.L SP_stripes_y_radius*2,d0,d1 ; y'=(yr*cos(w))/2^15
 	swap	d0
@@ -1591,7 +1591,7 @@ sp_get_stripes_y_coords_loop
 	move.w	d0,(a1)+		; y position
 	addq.w	#sp_stripes_y_angle_step,d2
 	and.w	d5,d2			; remove overflow
-	dbf	d7,sp_get_stripes_y_coords_loop
+	dbf	d7,sp_get_stripes_y_coordinates_loop
 	rts
 
 
@@ -1599,7 +1599,7 @@ sp_get_stripes_y_coords_loop
 tb_set_background_bars
 	movem.l	a4-a6,-(a7)
 	moveq	#tb_bar_height,d4
-	lea	tb_yz_coords(pc),a0
+	lea	tb_yz_coordinates(pc),a0
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
 	move.l	extra_memory(a3),a5	; BPLAM table
@@ -1710,7 +1710,7 @@ make_striped_bar_loop
 tb_set_foreground_bars
 	movem.l	a4-a6,-(a7)
 	moveq	#tb_bar_height,d4
-	lea	tb_yz_coords(pc),a0
+	lea	tb_yz_coordinates(pc),a0
 	move.l	cl2_construction2(a3),a2
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE,a2
 	move.l	extra_memory(a3),a5	; BPLAM table
@@ -1746,7 +1746,7 @@ tb_set_foreground_bars_skip4
 	CNOP 0,4
 sp_make_color_offsets_table
 	moveq	#$00000001,d1		; color offset 1st & 2nd stripe
-	lea	sp_stripes_y_coords(pc),a0
+	lea	sp_stripes_y_coordinates(pc),a0
 	lea	sp_color_offsets_table(pc),a1
 	moveq	#sp_stripes_number-1,d7
 sp_make_color_offsets_table_loop1
@@ -2636,13 +2636,13 @@ tb_colorfradients
 	INCLUDE "FlexiTwister:colortables/Bars-Colorgradient.ct"
 
 	CNOP 0,4
-tb_yz_coords
+tb_yz_coordinates
 	DS.W tb_bars_number*(cl2_display_width-1)*2
 
 
 ; Striped-Pattern
 	CNOP 0,2
-sp_stripes_y_coords
+sp_stripes_y_coordinates
 	DS.W sp_stripe_height*sp_stripes_number
 
 	CNOP 0,2
