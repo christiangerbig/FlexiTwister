@@ -114,7 +114,7 @@
 ; COLOR01: 1 x 16 = 16 colors: color gradient scroll text centered
 
 
-; Execution time 68020: 264 raster lines
+; Execution time 68020: 264 rasterlines
 
 
 	MC68040
@@ -304,9 +304,9 @@ pf1_plane_moduli		EQU (pf1_plane_width*(pf1_depth3-1))+pf1_plane_width-data_fetc
 
 diwstrt_bits			EQU ((display_window_vstart&$ff)*DIWSTRTF_V0)|(display_window_hstart&$ff)
 diwstop_bits			EQU ((display_window_vstop&$ff)*DIWSTOPF_V0)|(display_window_hstop&$ff)
-ddfstrt_bits			EQU DDFSTART_320_PIXEL
+ddfstrt_bits			EQU DDFSTRT_320_PIXEL
 ddfstop_bits			EQU DDFSTOP_OVERSCAN_16_PIXEL
-bplcon0_bits			EQU BPLCON0F_ECSENA|((pf_depth>>3)*BPLCON0F_BPU3)|(BPLCON0F_COLOR)|((pf_depth&$07)*BPLCON0F_BPU0)
+bplcon0_bits			EQU BPLCON0F_ECSENA|((pf_depth>>3)*BPLCON0F_BPU3)|BPLCON0F_COLOR|((pf_depth&$07)*BPLCON0F_BPU0)
 bplcon1_bits			EQU 0
 bplcon2_bits			EQU 0
 bplcon3_bits1			EQU 0
@@ -337,9 +337,9 @@ lg_image_x_size			EQU 256
 lg_image_plane_width		EQU lg_image_x_size/8
 lg_image_y_size			EQU 54
 lg_image_depth			EQU 4
-lg_image_x_centre		EQU (visible_pixels_number-lg_image_x_size)/2
+lg_image_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
 
-lg_image_x_position		EQU display_window_hstart+lg_image_x_centre+14
+lg_image_x_position		EQU display_window_hstart+lg_image_x_center+14
 lg_image_y_position		EQU MINROW
 
 ; Volume-Meter
@@ -350,9 +350,9 @@ vm_max_period_step		EQU 1
 tb_bars_number			EQU 3
 tb_bar_height			EQU 32
 tb_y_radius			EQU (visible_lines_number-tb_bar_height)/2
-tb_y_centre			EQU (cl2_display_y_size-tb_bar_height)/2
+tb_y_center			EQU (cl2_display_y_size-tb_bar_height)/2
 tb_y_angle_step_radius		EQU 6
-tb_y_angle_step_centre		EQU 3
+tb_y_angle_step_center		EQU 3
 tb_y_angle_step_step		EQU 1
 tb_y_distance			EQU sine_table_length1/tb_bars_number
 
@@ -1116,7 +1116,7 @@ vm_init_audio_channel_info
 ssb_init_color_table
 	move.l	#color00_bits,d0
 	move.l	extra_memory(a3),a0
-	ADDF.L	em_color_table,a0
+	add.l	#em_color_table,a0
 	moveq	#(color_values_number2*2)-1,d7
 ssb_init_color_table_loop
 	move.l	d0,(a0)+		; light color values
@@ -1540,8 +1540,8 @@ tb_get_yz_coordinates
 	move.w	d0,tb_y_angle_step_angle(a3) 
 	lea	sine_table1(pc),a0
 	lea	tb_yz_coordinates(pc),a1
-	move.w	#tb_y_centre,a2
-	move.w	#tb_y_angle_step_centre,a4
+	move.w	#tb_y_center,a2
+	move.w	#tb_y_angle_step_center,a4
 	moveq	#(cl2_display_width-1)-1,d7 ; number of columns
 tb_get_yz_coordinates_loop1
 	move.l	(a0,d5.w*4),d0		; sin(w)
@@ -1797,7 +1797,7 @@ horiz_scrolltext
 	lea	hst_chars_image_pointers(pc),a1
 	move.l	pf1_construction1(a3),a2
 	move.l	(a2),d3
-	add.l	#(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),d3 ; vertical centering
+	ADDF.L	(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),d3 ; vertical centering
 	lea	BLTAPT-DMACONR(a6),a2
 	lea	BLTDPT-DMACONR(a6),a4
 	lea	BLTSIZE-DMACONR(a6),a5
@@ -1808,7 +1808,7 @@ horiz_scrolltext_loop
 	move.w	(a0),d0			; x
 	move.w	d0,d2		
 	lsr.w	#3,d0			; byte offset
-	add.l	d3,d0			; x offset
+	add.l	d3,d0			; add playfield address
 	WAITBLIT
 	move.l	(a1)+,(a2)		; character image
 	move.l	d0,(a4)			; playfield write
@@ -1899,7 +1899,7 @@ hst_horiz_scroll
 	bne.s	hst_horiz_scroll_quit
 	move.l	pf1_construction1(a3),a0
 	move.l	(a0),a0
-	ADDF.L	(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),a0 ; y centering
+	ADDF.W	(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),a0 ; y centering
 	WAITBLIT
 	move.w	hst_text_bltcon0_bits(a3),BLTCON0-DMACONR(a6)
 	move.l	a0,BLTAPT-DMACONR(a6)	; source
