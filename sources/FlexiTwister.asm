@@ -411,13 +411,7 @@ hst_text_y_position		EQU (pf1_y_size3-hst_text_char_y_size)/2
 hst_color_gradient_height	EQU hst_text_char_y_size
 hst_color_gradient_y_pos	EQU (ssb_bar_height-hst_text_char_y_size)/2
 
-hst_copy_blit_x_size		EQU hst_text_char_x_size
-hst_copy_blit_y_size		EQU hst_text_char_y_size*hst_text_char_depth
-
-hst_horiz_scroll_blit_x_size	EQU hst_horiz_scroll_window_x_size
-hst_horiz_scroll_blit_y_size	EQU hst_horiz_scroll_window_y_size*hst_horiz_scroll_window_depth
-
-hst_text_delay			EQU 3*PAL_FPS
+hst_text_delay			EQU 3*PAL_FPS ; 3 seconds
 
 ; Horiz-Scroll-Logo
 hsl_x_center			EQU display_window_hstart+((visible_pixels_number-lg_image_x_size)/2)+14
@@ -874,7 +868,7 @@ hst_active			RS.W 1
 	RS_ALIGN_LONGWORD
 hst_image			RS.L 1
 hst_text_table_start		RS.W 1
-hst_text_BLTCON0_bits		RS.W 1
+hst_text_softscroll		RS.W 1
 hst_char_toggle_image		RS.W 1
 hst_text_y_offset		RS.W 1
 hst_horiz_scroll_speed		RS.W 1
@@ -982,7 +976,7 @@ init_main_variables
 	lea	hst_image_data,a0
 	move.l	a0,hst_image(a3)
 	move.w	d0,hst_text_table_start(a3)
-	move.w	d0,hst_text_bltcon0_bits(a3)
+	move.w	d0,hst_text_softscroll(a3)
 	move.w	d0,hst_char_toggle_image(a3)
 	move.w	d0,hst_text_y_offset(a3)
 	moveq	#hst_horiz_scroll_speed1,d2
@@ -1301,6 +1295,7 @@ beam_routines
 	bsr	set_second_copperlist
 	bsr	swap_playfield1
 	bsr	set_playfield1
+	bsr	hst_get_text_softscroll
 	bsr	horiz_scrolltext
 	bsr	hst_horiz_scroll
 	bsr	horiz_scroll_logo_start
@@ -1786,12 +1781,21 @@ sp_make_pattern_skip
 
 
 	CNOP 0,4
+hst_get_text_softscroll
+	moveq	#hst_text_char_x_size-1,d0
+	and.w	hst_chars_x_positions(pc),d0 ; x shift
+	ror.w	#4,d0			; adjust bits
+	move.w	d0,hst_text_softscroll(a3) 
+	rts
+
+
+	CNOP 0,4
 horiz_scrolltext
 	movem.l a4-a5,-(a7)
 	tst.w	hst_active(a3)
 	bne.s	horiz_scrolltext_quit
 	bsr.s	horiz_scrolltext_init
-	move.w	#((hst_copy_blit_y_size)<<6)+(hst_copy_blit_x_size/WORD_BITS),d4 ; BLTSIZE
+	move.w	#((hst_text_char_y_size*hst_text_char_depth)<<6)|(hst_text_char_x_size/WORD_BITS),d4 ; BLTSIZE
 	move.w	#hst_text_char_x_restart,d5
 	lea	hst_chars_x_positions(pc),a0
 	lea	hst_chars_image_pointers(pc),a1
@@ -1801,12 +1805,11 @@ horiz_scrolltext
 	lea	BLTAPT-DMACONR(a6),a2
 	lea	BLTDPT-DMACONR(a6),a4
 	lea	BLTSIZE-DMACONR(a6),a5
-	bsr.s	hst_get_text_softscroll
 	moveq	#hst_text_chars_number-1,d7
 horiz_scrolltext_loop
 	moveq	#0,d0
 	move.w	(a0),d0			; x
-	move.w	d0,d2		
+	move.w	d0,d2			; store x
 	lsr.w	#3,d0			; byte offset
 	add.l	d3,d0			; add playfield address
 	WAITBLIT
@@ -1817,9 +1820,9 @@ horiz_scrolltext_loop
 	bpl.s	horiz_scrolltext_skip1
 	move.l	a0,-(a7)
 	bsr.s	hst_get_new_char_image
-	move.l	d0,-4(a1)		; new character
-	add.w	d5,d2			; restart x position
 	move.l	(a7)+,a0
+	move.l	d0,-4(a1)		; new character image
+	add.w	d5,d2			; reset x
 horiz_scrolltext_skip1
 	move.w	d2,(a0)+		
 	dbf	d7,horiz_scrolltext_loop
@@ -1839,17 +1842,7 @@ horiz_scrolltext_init
 	move.l	#(BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC)<<16,BLTCON0-DMACONR(a6) ; minterm D=A
 	moveq	#-1,d0
 	move.l	d0,BLTAFWM-DMACONR(a6)
-	move.l	#((hst_image_plane_width-hst_text_char_width)<<16)+(pf1_plane_width-hst_text_char_width),BLTAMOD-DMACONR(a6) ; A&D moduli
-	rts
-
-
-	CNOP 0,4
-hst_get_text_softscroll
-	moveq	#hst_text_char_x_size-1,d0
-	and.w	(a0),d0			; x position & $f
-	ror.w	#4,d0			; adjust bits
-	or.w	#BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC,d0 ; add minterm D=A
-	move.w	d0,hst_text_bltcon0_bits(a3) 
+	move.l	#((hst_image_plane_width-hst_text_char_width)<<16)|(pf1_plane_width-hst_text_char_width),BLTAMOD-DMACONR(a6) ; A&D moduli
 	rts
 
 
@@ -1900,13 +1893,17 @@ hst_horiz_scroll
 	move.l	pf1_construction1(a3),a0
 	move.l	(a0),a0
 	ADDF.W	(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),a0 ; y centering
+	moveq	#0,d0
+	move.w	hst_text_softscroll(a3),d0
+	or.w	#BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC,d0 ; minterm D=A
+	swap	d0
 	WAITBLIT
-	move.w	hst_text_bltcon0_bits(a3),BLTCON0-DMACONR(a6)
-	move.l	a0,BLTAPT-DMACONR(a6)	; source
+	move.l	d0,BLTCON0-DMACONR(a6)
+	move.l	a0,BLTAPT-DMACONR(a6)
 	addq.w	#WORD_SIZE,a0		; skip 16 pixel
-	move.l	a0,BLTDPT-DMACONR(a6)	; destination
-	move.l	#((pf1_plane_width-hst_horiz_scroll_window_width)<<16)+(pf1_plane_width-hst_horiz_scroll_window_width),BLTAMOD-DMACONR(a6) ; A&D moduli
-	move.w	#((hst_horiz_scroll_blit_y_size)<<6)+(hst_horiz_scroll_blit_x_size/WORD_BITS),BLTSIZE-DMACONR(a6)
+	move.l	a0,BLTDPT-DMACONR(a6)
+	move.l	#((pf1_plane_width-hst_horiz_scroll_window_width)<<16)|(pf1_plane_width-hst_horiz_scroll_window_width),BLTAMOD-DMACONR(a6) ; A&D moduli
+	move.w	#((hst_horiz_scroll_window_y_size*hst_horiz_scroll_window_depth)<<6)|(hst_horiz_scroll_window_x_size/WORD_BITS),BLTSIZE-DMACONR(a6)
 hst_horiz_scroll_quit
 	rts
 
