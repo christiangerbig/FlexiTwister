@@ -371,9 +371,6 @@ tb_restore_blit_y_size		EQU cl2_display_y_size
 
 ; Sine-Striped-Bar
 ssb_bar_height			EQU 80
-ssb_y_radius			EQU 112
-ssb_y_center			EQU (cl2_display_y_size-ssb_bar_height+ssb_y_radius)/2
-ssb_y_angle_speed		EQU 3
 
 ; Stripes-Pattern
 sp_stripes_y_radius		EQU ssb_bar_height/2
@@ -412,6 +409,11 @@ hst_color_gradient_height	EQU hst_text_char_y_size
 hst_color_gradient_y_pos	EQU (ssb_bar_height-hst_text_char_y_size)/2
 
 hst_text_delay			EQU 3*PAL_FPS ; 3 seconds
+
+; Bounce-Effect
+be_y_radius			EQU 112
+be_y_center			EQU (cl2_display_y_size-ssb_bar_height+be_y_radius)/2
+be_y_angle_speed		EQU 3
 
 ; Horiz-Scroll-Logo
 hsl_x_center			EQU display_window_hstart+((visible_pixels_number-lg_image_x_size)/2)+14
@@ -857,7 +859,7 @@ tb_y_angle			RS.W 1
 tb_y_angle_step_angle		RS.W 1
 
 ; Sine-Striped-Bar
-ssb_y_angle			RS.W 1
+ssb_y_offset			RS.W 1
 
 ; Striped-Pattern
 sp_stripes_y_angle		RS.W 1
@@ -874,6 +876,9 @@ hst_text_y_offset		RS.W 1
 hst_horiz_scroll_speed		RS.W 1
 hst_pause_horiz_scroll_active	RS.W 1
 hst_text_delay_counter		RS.W 1
+
+; Bounce-Effect
+be_y_angle			RS.W 1
 
 ; Horiz-Scroll-Logo
 hsl_active			RS.W 1
@@ -964,7 +969,7 @@ init_main_variables
 	move.w	d0,tb_y_angle_step_angle(a3) ; 0°
 
 ; Sine-Striped-Bar
-	move.w	d0,ssb_y_angle(a3)	; 0°
+	move.w	d0,ssb_y_offset(a3)
 
 ; Stripes-Pattern
 	move.w	d0,sp_stripes_y_angle(a3) ; 0°
@@ -983,6 +988,9 @@ init_main_variables
 	move.w	d2,hst_horiz_scroll_speed(a3)
 	move.w	d1,hst_pause_horiz_scroll_active(a3)
 	move.w	d1,hst_text_delay_counter(a3) ; delay counter inactive
+
+; Bounce-effect
+	move.w	d0,be_y_angle(a3)	; 0°
 
 ; Horiz-Scroll-Logo
 	move.w	d1,hsl_active(a3)
@@ -1302,6 +1310,7 @@ beam_routines
 	bsr	horiz_scroll_logo_stop
 	bsr	horiz_scroll_logo
 	bsr	tb_clear_second_copperlist
+	bsr	bounce_effect
 	bsr	cl2_update_bpl1dat
 	bsr	bf_convert_colors
 	bsr	sp_get_stripes_y_coordinates
@@ -1347,7 +1356,7 @@ beam_routines
 
 	CNOP 0,4
 set_playfield1
-	moveq	#ssb_y_radius,d1	
+	moveq	#be_y_radius,d1
 	sub.w	hst_text_y_offset(a3),d1 ; vertical centering
 	MULUF.W pf1_plane_width*pf1_depth3,d1,d0 ; y offset
 	ADDF.W	pf1_plane_x_offset/8,d1
@@ -1384,7 +1393,7 @@ horiz_scroll_logo_start_skip
 	swap	d0
 	add.w	#hsl_start_x_center*SHIRES_PIXEL_FACTOR*2,d0
 	move.w	d0,hsl_variable_x_radius(a3)
-	addq.w	#hsl_start_x_angle_speed,d2 ; next x angle
+	addq.w	#hsl_start_x_angle_speed,d2
 	move.w	d2,hsl_start_x_angle(a3) 
 horiz_scroll_logo_start_quit
 	rts
@@ -1409,7 +1418,7 @@ horiz_scroll_logo_stop_skip
 	swap	d0
 	add.w	#hsl_stop_x_center*SHIRES_PIXEL_FACTOR*2,d0
 	move.w	d0,hsl_variable_x_radius(a3)
-	sub.w	hsl_stop_x_angle_speed(a3),d2 ; next x angle
+	sub.w	hsl_stop_x_angle_speed(a3),d2
 	move.w	d2,hsl_stop_x_angle(a3) 
 horiz_scroll_logo_stop_quit
 	rts
@@ -1425,8 +1434,8 @@ horiz_scroll_logo
 	muls.w	hsl_variable_x_radius(a3),d3 ; x'=xrsin(w)/2^16
 	swap	d3
 	add.w	#hsl_x_center*SHIRES_PIXEL_FACTOR,d3
-	addq.w	#hsl_x_angle_speed,d1	; next x angle
-	and.w	#sine_table_length2-1,d1 ; remove overflow
+	addq.w	#hsl_x_angle_speed,d1
+	and.w	#sine_table_length2-1,d1 ; remove overflow 360°
 	move.w	d1,hsl_x_angle(a3)	
 	moveq	#lg_image_y_position,d4
 	MOVEF.W lg_image_y_size,d5
@@ -1443,7 +1452,7 @@ horiz_scroll_logo_loop
 	SET_SPRITE_POSITION d0,d1,d2
 	move.w	d1,(a0)			; SPRxPOS
 	move.w	d1,(a1)			; SPRxPOS
-	add.w	d6,d3			; next dprite x position
+	add.w	d6,d3			; next sprite x position
 	move.w	d2,spr_pixel_per_datafetch/8(a0) ; SPRxCTL
 	or.b	#SPRCTLF_ATT,d2
 	move.w	d2,spr_pixel_per_datafetch/8(a1) ; SPRxCTL
@@ -1456,17 +1465,34 @@ horiz_scroll_logo_quit
 
 
 	CNOP 0,4
+bounce_effect
+	move.w	be_y_angle(a3),d1
+	move.w	d1,d0		
+	addq.w	#be_y_angle_speed,d0
+	and.w	#(sine_table_length2/2)-1,d0 ; remove overflow 180°
+	move.w	d0,be_y_angle(a3)
+	lea	sine_table2(pc),a0
+	move.l	(a0,d1.w*4),d0		; sin(w)
+	MULUF.L be_y_radius*2,d0,d1	; y'=(yr*sin(w))/2^15
+	swap	d0
+	move.w	d0,ssb_y_offset(a3)
+	add.w	#be_y_radius,d0		; y' + y radius
+	move.w	d0,hst_text_y_offset(a3)
+	rts
+
+
+	CNOP 0,4
 cl2_update_bpl1dat
-	moveq	#ssb_y_radius,d0
+	moveq	#be_y_radius,d0
 	sub.w	hst_text_y_offset(a3),d0 ; vertical centering
 	MULUF.W pf1_plane_width*pf1_depth3,d0,d1 ; y offset
-	addq.w	#pf1_bpl1dat_x_offset/8,d0
+	addq.w	#pf1_bpl1dat_x_offset/8,d0 ; x offset
 	moveq	#pf1_plane_width*pf1_depth3,d1
 	MOVEF.L cl2_extension1_size,d2
-	move.l	pf1_display(a3),a0
+	move.l	pf1_construction2(a3),a0
 	move.l	(a0),a0
 	add.l	d0,a0			; + xy offset
-	move.l	cl2_display(a3),a1
+	move.l	cl2_construction2(a3),a1
 	ADDF.W	cl2_extension1_entry+cl2_ext1_BPL1DAT+WORD_SIZE,a1
 	MOVEF.W (visible_lines_number/32)-1,d7
 cl2_update_bpl1dat_loop
@@ -1559,7 +1585,7 @@ tb_get_yz_coordinates_loop2
 	move.w	d0,(a1)+		; y position
 	add.b	d3,d2			; y distance to next bar
 	dbf	d6,tb_get_yz_coordinates_loop2
-	addq.b	#tb_y_angle_step_step,d5 ; next y step angle
+	addq.b	#tb_y_angle_step_step,d5
 	dbf	d7,tb_get_yz_coordinates_loop1
 	move.l	(a7)+,a4
 	rts
@@ -1570,7 +1596,7 @@ sp_get_stripes_y_coordinates
 	move.w	sp_stripes_y_angle(a3),d2
 	move.w	d2,d0
 	MOVEF.W (sine_table_length2/2)-1,d5 ; overflow 180°
-	add.w	sp_stripes_y_angle_speed(a3),d0 ; next y angle
+	add.w	sp_stripes_y_angle_speed(a3),d0
 	and.w	d5,d0			; remove overflow
 	move.w	d0,sp_stripes_y_angle(a3) 
 	;moveq	#sp_stripes_y_radius*2,d3
@@ -1629,25 +1655,13 @@ tb_set_background_bars_skip4
 
 	CNOP 0,4
 make_striped_bar
-	move.w	ssb_y_angle(a3),d1
-	move.w	d1,d0		
-	addq.w	#ssb_y_angle_speed,d0	; next y angle
-	and.w	#(sine_table_length2/2)-1,d0 ; remove overflow
-	move.w	d0,ssb_y_angle(a3) 
-	lea	sine_table2(pc),a0
-	move.l	(a0,d1.w*4),d0		; sin(w)
-	MULUF.L ssb_y_radius*2,d0,d1	; y'=(yr*sin(w))/2^15
-	swap	d0
-	move.w	d0,d1		
-	add.w	#ssb_y_radius,d0	; y' + y radius
-	move.w	d0,hst_text_y_offset(a3) 
-	add.w	#ssb_y_center,d1	; y' + y y center
-	MULUF.W cl2_extension1_size/LONGWORD_SIZE,d1,d0 ; y offset in cl
+	move.w	ssb_y_offset(a3),d0
+	add.w	#be_y_center,d0		; y' + y y center
+	MULUF.W cl2_extension1_size/4,d0,d1 ; y offset in cl
 	move.l	extra_memory(a3),a0
 	add.l	#em_bplam_table2,a0
 	move.l	cl2_construction2(a3),a1 
-	ADDF.W	(cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE),a1
-	lea	(a1,d1.w*4),a1		; + y offset
+	lea	cl2_extension1_entry+cl2_ext1_BPLCON4_1+WORD_SIZE(a1,d0.w*4),a1	; add cl address
 	move.w	#cl2_extension1_size,a2
 	moveq	#(ssb_bar_height)-1,d7
 make_striped_bar_loop
@@ -1920,7 +1934,7 @@ bar_fader_in
 	bne.s	bar_fader_in_quit
 	move.w	bfi_fader_angle(a3),d2
 	move.w	d2,d0
-	ADDF.W	bfi_fader_angle_speed,d0 ; next angle
+	ADDF.W	bfi_fader_angle_speed,d0
 	cmp.w	#sine_table_length1/2,d0 ; 180° ?
 	ble.s	bar_fader_in_skip
 	MOVEF.W sine_table_length1/2,d0
@@ -1957,7 +1971,7 @@ bar_fader_out
 	bne.s	bar_fader_out_quit
 	move.w	bfo_fader_angle(a3),d2
 	move.w	d2,d0
-	ADDF.W	bfo_fader_angle_speed,d0 ; next angle
+	ADDF.W	bfo_fader_angle_speed,d0
 	cmp.w	#sine_table_length1/2,d0 ; 180° ?
 	ble.s	bar_fader_out_skip
 	MOVEF.W sine_table_length1/2,d0
