@@ -1430,7 +1430,7 @@ horiz_scroll_logo
 	bne.s	horiz_scroll_logo_quit
 	move.w	hsl_x_angle(a3),d1
 	lea	sine_table2(pc),a0
-	move.w	2(a0,d1.w*4),d3		; sin(w)
+	move.w	WORD_SIZE(a0,d1.w*4),d3	; sin(w)
 	muls.w	hsl_variable_x_radius(a3),d3 ; x'=xrsin(w)/2^16
 	swap	d3
 	add.w	#hsl_x_center*SHIRES_PIXEL_FACTOR,d3
@@ -1741,7 +1741,7 @@ tb_set_foreground_bars_loop2
 	bra	tb_set_foreground_bars_skip3
 	CNOP 0,4
 tb_set_foreground_bars_skip2
-	lea	(a2,d0.w*4),a4		; add y offset
+	lea	(a2,d0.w*4),a4		; add cl address
 	COPY_TWISTED_BAR.B tb,cl2,extension1,bar_height
 tb_set_foreground_bars_skip3
 	dbf	d6,tb_set_foreground_bars_loop2
