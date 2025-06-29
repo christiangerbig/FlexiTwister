@@ -165,7 +165,7 @@ requires_060_cpu		EQU FALSE
 requires_fast_memory		EQU FALSE
 requires_multiscan_monitor	EQU FALSE
 
-workbench_start_enabled		EQU TRUE
+workbench_start_enabled		EQU FALSE ; [TRUE]
 screen_fader_enabled		EQU TRUE
 text_output_enabled		EQU FALSE
 
@@ -339,8 +339,8 @@ lg_image_y_size			EQU 54
 lg_image_depth			EQU 4
 lg_image_x_center		EQU (visible_pixels_number-lg_image_x_size)/2
 
-lg_image_x_position		EQU display_window_hstart+lg_image_x_center+14
-lg_image_y_position		EQU MINROW
+lg_logo_x_position		EQU display_window_hstart+lg_image_x_center+14
+lg_logo_y_position		EQU MINROW
 
 ; Volume-Meter
 vm_period_divider		EQU 48
@@ -1437,7 +1437,7 @@ horiz_scroll_logo
 	addq.w	#hsl_x_angle_speed,d1
 	and.w	#sine_table_length2-1,d1 ; remove overflow 360°
 	move.w	d1,hsl_x_angle(a3)	
-	moveq	#lg_image_y_position,d4
+	moveq	#lg_logo_y_position,d4
 	MOVEF.W lg_image_y_size,d5
 	add.w	d4,d5			; VSTOP
 	MOVEF.W spr_x_size2*SHIRES_PIXEL_FACTOR,d6
@@ -2061,11 +2061,11 @@ scroll_logo_bottom_in_skip
 	MULUF.L slb_y_radius*2,d0,d1	; y'=yr*cos(w)/2^16
 	swap	d0
 	add.w	#slb_y_center,d0
-	MOVEF.W lg_image_y_position,d5
+	MOVEF.W lg_logo_y_position,d5
 	add.w	d0,d5			; vertical centering
 	addq.w	#slbi_y_angle_speed,d2
 	move.w	d2,slbi_y_angle(a3)
-	bsr.s	slb_scroll_logo
+	bsr.s	slb_vert_scroll_logo
 scroll_logo_bottom_in_quit
 	move.l	(a7)+,a4
 	rts
@@ -2088,25 +2088,28 @@ scroll_logo_bottom_out_skip
 	MULUF.L slb_y_radius*2,d0,d1	; y'=yr*cos(w)/2^16
 	swap	d0
 	add.w	#slb_y_center,d0
-	MOVEF.W lg_image_y_position,d5
+	MOVEF.W lg_logo_y_position,d5
 	add.w	d0,d5			; vertical centering
 	addq.w	#slbi_y_angle_speed,d2
 	move.w	d2,slbo_y_angle(a3)
-	bsr.s	slb_scroll_logo
+	bsr.s	slb_vert_scroll_logo
 scroll_logo_bottom_out_quit
 	move.l	(a7)+,a4
 	rts
 
 
+; Input
+; d5.w	VSTART
+; Result
 	CNOP 0,4
-slb_scroll_logo
-	MOVEF.W lg_image_x_position*SHIRES_PIXEL_FACTOR,d4
+slb_vert_scroll_logo
+	MOVEF.W lg_logo_x_position*SHIRES_PIXEL_FACTOR,d4
 	MOVEF.W lg_image_y_size,d6
 	add.w	d5,d6			; VSTOP
 	lea	spr_pointers_display(pc),a2
 	move.w	#spr_x_size2*SHIRES_PIXEL_FACTOR,a4 ; x
 	moveq	#(spr_used_number/2)-1,d7
-slb_scroll_logo_loop
+slb_vert_scroll_logo_loop
 	move.w	d4,d0			; HSTART
 	move.w	d5,d1			; VSTART
 	move.w	d6,d2			; VSTOP
@@ -2119,7 +2122,7 @@ slb_scroll_logo_loop
 	move.w	d2,spr_pixel_per_datafetch/8(a0) ; SPRxCTL
 	or.b	#SPRCTLF_ATT,d2
 	move.w	d2,spr_pixel_per_datafetch/8(a1) ; SPRxCTL
-	dbf	d7,slb_scroll_logo_loop
+	dbf	d7,slb_vert_scroll_logo_loop
 	rts
 
 
@@ -2318,14 +2321,14 @@ cfc_rgb8_copy_color_table
 	moveq	#cfc_rgb8_start_color,d4 ; color registers counter
 	lea	pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; color values buffer
 	move.l	cl1_display(a3),a1 
-	ADDF.W	cl1_COLOR01_high6+WORD_SIZE,a1
+	ADDF.W	cl1_COLOR00_high6+(cfc_rgb8_start_color*LONGWORD_SIZE)+WORD_SIZE,a1
 	IFNE cl1_size1
 		move.l	cl1_construction1(a3),a2 
-		ADDF.W	cl1_COLOR01_high6+WORD_SIZE,a2
+		ADDF.W	cl1_COLOR00_high6+(cfc_rgb8_start_color*LONGWORD_SIZE)+WORD_SIZE,a2
 	ENDC
 	IFNE cl1_size2
 		move.l	cl1_construction2(a3),a4 
-		ADDF.W	cl1_COLOR01_high6+WORD_SIZE,a4
+		ADDF.W	cl1_COLOR00_high6+(cfc_rgb8_start_color*LONGWORD_SIZE)+WORD_SIZE,a4
 	ENDC
 	MOVEF.W cfc_rgb8_colors_number-1,d7
 cfc_rgb8_copy_color_table_loop
@@ -2340,14 +2343,14 @@ cfc_rgb8_copy_color_table_loop
 		move.w	d0,(a4)		; color high
 	ENDC
 	RGB8_TO_RGB4_LOW d2,d1,d3
-	move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a1) ; color low
+	move.w	d2,cl1_COLOR00_low6-cl1_COLOR00_high6(a1) ; color low
 	addq.w	#QUADWORD_SIZE,a1	; next color register
 	IFNE cl1_size1
-		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a2) ; color low
+		move.w	d2,cl1_COLOR00_low6-cl1_COLOR00_high6(a2) ; color low
 		addq.w	#QUADWORD_SIZE,a2 ; next color register
 	ENDC
 	IFNE cl1_size2
-		move.w	d2,cl1_COLOR01_low6-cl1_COLOR01_high6(a4) ; color low
+		move.w	d2,cl1_COLOR00_low6-cl1_COLOR00_high6(a4) ; color low
 		addq.w	#QUADWORD_SIZE,a4 ; next color register
 	ENDC
 	addq.b	#2,d4			; increment color registers counter
