@@ -2467,12 +2467,12 @@ mh_exit_demo_quit
 
 	IFEQ pt_ciatiming_enabled
 		CNOP 0,4
-ciab_ta_int_server
+ciab_ta_server
 	ENDC
 
 	IFNE pt_ciatiming_enabled
 		CNOP 0,4
-VERTB_int_server
+VERTB_server
 	ENDC
 
 ; PT-Replay
@@ -2567,15 +2567,15 @@ pt_select_channel
 	rts
 
 	CNOP 0,4
-ciab_tb_int_server
+ciab_tb_server
 	PT_TIMER_INTERRUPT_SERVER
 
 	CNOP 0,4
-EXTER_int_server
+EXTER_server
 	rts
 
 	CNOP 0,4
-nmi_int_server
+nmi_server
 	rts
 
 
