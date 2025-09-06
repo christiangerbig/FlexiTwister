@@ -2563,7 +2563,7 @@ pt_restart_scrolltext
 pt_select_channel
 	moveq	#NIBBLE_MASK_LOW,d0
 	and.b	n_cmdlo(a2),d0
-        move.w	d0,vm_audio_channel(a3)
+	move.w	d0,vm_audio_channel(a3)
 	rts
 
 	CNOP 0,4
