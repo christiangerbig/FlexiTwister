@@ -1667,7 +1667,7 @@ make_striped_bar
 make_striped_bar_loop
 	move.b	(a0)+,d0		; BPLAM
 	move.b	d0,(a1)			; BPLCON4 high
-	move.b	d0,4(a1)
+	move.b	d0,LONGWORD_SIZE(a1)
 	move.b	d0,8(a1)
 	move.b	d0,12(a1)
 	move.b	d0,16(a1)
@@ -1835,7 +1835,7 @@ horiz_scrolltext_loop
 	move.l	a0,-(a7)
 	bsr.s	hst_get_new_char_image
 	move.l	(a7)+,a0
-	move.l	d0,-4(a1)		; new character image
+	move.l	d0,-LONGWORD_SIZE(a1)		; new character image
 	add.w	d5,d2			; reset x
 horiz_scrolltext_skip1
 	move.w	d2,(a0)+		
