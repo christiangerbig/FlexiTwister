@@ -1499,7 +1499,7 @@ cl2_update_bpl1dat_loop
 	REPT 32
 		move.w	(a0),(a1)	; copy 16 pixel
 		add.l	d1,a0		; next line in playfield
-		add.l	d2,a1		; next line in cl
+		add.l	d2,a1		; next line
 	ENDR
 	dbf	d7,cl2_update_bpl1dat_loop
 	rts
@@ -1647,7 +1647,7 @@ tb_set_background_bars_skip2
 tb_set_background_bars_skip3
 	dbf	d6,tb_set_background_bars_loop2
 tb_set_background_bars_skip4
-	addq.w	#LONGWORD_SIZE,a2	; next column in cl
+	addq.w	#LONGWORD_SIZE,a2	; next column
 	dbf	d7,tb_set_background_bars_loop1
 	movem.l	(a7)+,a4-a6
 	rts
@@ -1709,7 +1709,7 @@ make_striped_bar_loop
 	move.b	d0,LONGWORD_SIZE*40(a1)
 	move.b	d0,LONGWORD_SIZE*41(a1)
 	move.b	d0,LONGWORD_SIZE*42(a1)
-	add.l	a2,a1			; next line in cl
+	add.l	a2,a1			; next line
 	move.b	d0,(LONGWORD_SIZE*43)-cl2_extension1_size(a1)
 	dbf	d7,make_striped_bar_loop
 	rts
@@ -1746,7 +1746,7 @@ tb_set_foreground_bars_skip2
 tb_set_foreground_bars_skip3
 	dbf	d6,tb_set_foreground_bars_loop2
 tb_set_foreground_bars_skip4
-	addq.w	#LONGWORD_SIZE,a2	; next column in cl
+	addq.w	#LONGWORD_SIZE,a2	; next column
 	dbf	d7,tb_set_foreground_bars_loop1
 	movem.l	(a7)+,a4-a6
 	rts
@@ -1785,7 +1785,7 @@ sp_make_pattern_loop
 	move.w	(a1,d0.w*4),(a2)	; color high
 	addq.w	#QUADWORD_SIZE,a1	; next color value
 	move.w	WORD_SIZE-QUADWORD_SIZE(a1,d0.w*4),cl1_COLOR00_low1-cl1_COLOR00_high1(a2) ; color low
-	addq.w	#QUADWORD_SIZE,a2	; next line in cl
+	addq.w	#QUADWORD_SIZE,a2	; next line
 	add.b	d5,d4			; increment color registers counter
 	bne.s	sp_make_pattern_skip
 	addq.w	#LONGWORD_SIZE,a2	; skip CMOVE
@@ -1853,7 +1853,7 @@ horiz_scrolltext_quit
 horiz_scrolltext_init
 	move.w	#DMAF_BLITHOG|DMAF_SETCLR,DMACON-DMACONR(a6)
 	WAITBLIT
-	move.l	#(BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC)<<16,BLTCON0-DMACONR(a6) ; minterm D=A
+	move.l	#(BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC)<<16,BLTCON0-DMACONR(a6) ; minterm D = A
 	moveq	#-1,d0
 	move.l	d0,BLTAFWM-DMACONR(a6)
 	move.l	#((hst_image_plane_width-hst_text_char_width)<<16)|(pf1_plane_width-hst_text_char_width),BLTAMOD-DMACONR(a6) ; A&D moduli
@@ -1909,7 +1909,7 @@ hst_horiz_scroll
 	ADDF.W	(hst_text_x_position/8)+(hst_text_y_position*pf1_plane_width*pf1_depth3),a0 ; y centering
 	moveq	#0,d0
 	move.w	hst_text_softscroll(a3),d0
-	or.w	#BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC,d0 ; minterm D=A
+	or.w	#BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC,d0 ; minterm D = A
 	swap	d0
 	WAITBLIT
 	move.l	d0,BLTCON0-DMACONR(a6)
@@ -2778,12 +2778,12 @@ hst_stop_text
 ; PT-Replay
 	IFEQ pt_split_module_enabled
 pt_auddata			SECTION pt_audio,DATA
-		INCBIN "FlexiTwister:modules/MOD.CatchyTune2ReRemix.song"
+		INCBIN "FlexiTwister:trackermodules/MOD.CatchyTune2ReRemix.song"
 pt_audsmps			SECTION pt_audio2,DATA_C
-		INCBIN "FlexiTwister:modules/MOD.CatchyTune2ReRemix.smps"
+		INCBIN "FlexiTwister:trackermodules/MOD.CatchyTune2ReRemix.smps"
 	ELSE
 pt_auddata			SECTION pt_audio,DATA_C
-		INCBIN "FlexiTwister:modules/mod.CatchyTune2ReRemix"
+		INCBIN "FlexiTwister:trackermodules/mod.CatchyTune2ReRemix"
 	ENDC
 
 
