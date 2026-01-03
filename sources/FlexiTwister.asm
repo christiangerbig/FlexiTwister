@@ -1497,9 +1497,9 @@ cl2_update_bpl1dat
 	MOVEF.W (visible_lines_number/32)-1,d7
 cl2_update_bpl1dat_loop
 	REPT 32
-		move.w	(a0),(a1)	; copy 16 pixel
-		add.l	d1,a0		; next line in playfield
-		add.l	d2,a1		; next line
+	move.w	(a0),(a1)	; copy 16 pixel
+	add.l	d1,a0		; next line in playfield
+	add.l	d2,a1		; next line
 	ENDR
 	dbf	d7,cl2_update_bpl1dat_loop
 	rts
@@ -2691,20 +2691,20 @@ bfi_color_table
 	CNOP 0,4
 bfo_color_table
 	REPT ssb_bar_height
-		DC.L color00_bits
+	DC.L color00_bits
 	ENDR
 
 	CNOP 0,4
 bf_color_cache
 	REPT ssb_bar_height
-		DC.L color00_bits
+	DC.L color00_bits
 	ENDR
 
 
 ; Columns_fader
 ccf_columns_mask
 	REPT cl2_display_width-1
-		DC.B FALSE
+	DC.B FALSE
 	ENDR
 
 
@@ -2726,7 +2726,7 @@ cfc_rgb8_color_table
 ; Horiz-Scrolltext
 hst_text
 	REPT hst_text_chars_number/(hst_origin_char_x_size/hst_text_char_x_size)
-		DC.B " "
+	DC.B " "
 	ENDR
 	DC.B " 3               2               1                           "
 hst_restart_text
@@ -2734,7 +2734,7 @@ hst_restart_text
 	DC.B "                CALLED                   *FLEXI TWISTER*   ",ASCII_CTRL_P," "
 
 	REPT (hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size)
-		DC.B " "
+	DC.B " "
 	ENDR
 
 	DC.B "GREETINGS TO     ",ASCII_CTRL_P,"               "
@@ -2749,7 +2749,7 @@ hst_restart_text
 	DC.B "*WANTED TEAM*           "
 
 	REPT (hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size)
-		DC.B " "
+	DC.B " "
 	ENDR
 
 	DC.B "CREDITS       ",ASCII_CTRL_P,"                     "
@@ -2758,7 +2758,7 @@ hst_restart_text
 	DC.B "                      >GRASS<       ",ASCII_CTRL_P,"           "
 hst_stop_text
 	REPT ((hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1
-		DC.B " "
+	DC.B " "
 	ENDR
 	DC.B ASCII_CTRL_S," "
 
