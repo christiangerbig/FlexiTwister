@@ -3319,10 +3319,10 @@ mh_exit_demo_quit
 
 	IFEQ pt_ciatiming_enabled
 		CNOP 0,4
-ciab_ta_server
+ciab_ta_interrupt_server
 	ELSE
 		CNOP 0,4
-VERTB_server
+vertb_interrupt_server
 	ENDC
 
 
@@ -3430,15 +3430,15 @@ pt_trigger_morphing
 	rts
 
 	CNOP 0,4
-ciab_tb_server
+ciab_tb_interrupt_server
 	PT_TIMER_INTERRUPT_SERVER
 
 	CNOP 0,4
-EXTER_server
+exter_interrupt_server
 	rts
 
 	CNOP 0,4
-nmi_server
+nmi_interrupt_server
 	rts
 
 
@@ -6375,12 +6375,10 @@ mh_exit_demo_quit
 
 	IFEQ pt_ciatiming_enabled
 		CNOP 0,4
-ciab_ta_server
-	ENDC
-
-	IFNE pt_ciatiming_enabled
+ciab_ta_interrupt_server
+	ELSE
 		CNOP 0,4
-VERTB_server
+vertb_interrupt_server
 	ENDC
 
 ; PT-Replay
@@ -6477,15 +6475,15 @@ pt_select_channel
 	rts
 
 	CNOP 0,4
-ciab_tb_server
+ciab_tb_interrupt_server
 	PT_TIMER_INTERRUPT_SERVER
 
 	CNOP 0,4
-EXTER_server
+exter_interrupt_server
 	rts
 
 	CNOP 0,4
-nmi_server
+nmi_interrupt_server
 	rts
 
 
