@@ -1079,7 +1079,8 @@ init_main
 	bsr	init_sprites
 	bsr	init_CIA_timers
 	bsr	init_first_copperlist
-	bra	init_second_copperlist
+	bsr	init_second_copperlist
+	rts
 
 
 ; PT-Replay
@@ -1159,13 +1160,15 @@ tb_init_color_table_loop
 	CNOP 0,4
 bf_init_color_table
 	clr.w	bf_convert_colors_active(a3)
-	bra	bf_convert_colors
+	bsr	bf_convert_colors
+	rts
 
 
 	CNOP 0,4
 init_sprites
 	bsr.s	spr_init_pointers_table
-	bra.s	lg_init_attached_sprites_cluster
+	bsr.s	lg_init_attached_sprites_cluster
+	rts
 
 	INIT_SPRITE_POINTERS_TABLE
 
@@ -1190,7 +1193,8 @@ init_first_copperlist
 	COP_MOVEQ 0,COPJMP2
 	bsr	cl1_set_sprite_pointers
 	bsr	cl1_set_bitplane_pointers
-	bra	copy_first_copperlist
+	bsr	copy_first_copperlist
+	rts
 
 
 	COP_INIT_PLAYFIELD_REGISTERS cl1
@@ -1256,7 +1260,8 @@ init_second_copperlist
 	COP_LISTEND
 	bsr	copy_second_copperlist
 	bsr	swap_second_copperlist
-	bra	set_second_copperlist
+	bsr	set_second_copperlist
+	rts
 
 
 	COP_INIT_BPLCON4_CHUNKY cl2,cl2_hstart1,cl2_vstart1,cl2_display_x_size,cl2_display_y_size,open_border_enabled,tb_quick_clear_enabled,FALSE
@@ -1271,7 +1276,8 @@ init_second_copperlist
 	CNOP 0,4
 main
 	bsr.s	no_sync_routines
-	bra.s	beam_routines
+	bsr.s	beam_routines
+	rts
 
 
 	CNOP 0,4
@@ -2493,7 +2499,8 @@ vertb_interrupt_server
 ; PT-Replay
 	IFEQ pt_music_fader_enabled
 		bsr.s	pt_music_fader
-		bra.s	pt_PlayMusic
+		bsr.s	pt_PlayMusic
+		rts
 
 		PT_FADE_OUT_VOLUME stop_fx_active
 
@@ -2503,7 +2510,6 @@ vertb_interrupt_server
 	IFD PROTRACKER_VERSION_2 
 		PT2_REPLAY pt_effects_handler
 	ENDC
-
 	IFD PROTRACKER_VERSION_3
 		PT3_REPLAY pt_effects_handler
 	ENDC
