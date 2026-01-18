@@ -152,6 +152,7 @@
 
 
 PROTRACKER_VERSION_3		SET 1
+START_SECOND_COPPERLIST		SET 1
 
 
 	INCLUDE "macros.i"
@@ -1259,8 +1260,6 @@ init_second_copperlist
 	bsr.s	cl2_init_copper_interrupt
 	COP_LISTEND
 	bsr	copy_second_copperlist
-	bsr	swap_second_copperlist
-	bsr	set_second_copperlist
 	rts
 
 
