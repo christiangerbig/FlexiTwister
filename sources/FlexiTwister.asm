@@ -246,8 +246,8 @@ spr_x_size1			EQU 0
 spr_x_size2			EQU 64
 spr_depth			EQU 2
 spr_colors_number		EQU 0	; 16
-spr_odd_color_table_select	EQU 1
-spr_even_color_table_select	EQU 1
+spr_odd_color_table_select	EQU 1	; COLOR16..COLOR31
+spr_even_color_table_select	EQU 1	; COLOR16..COLOR31
 spr_used_number			EQU 8
 
 	IFD PROTRACKER_VERSION_2 
@@ -2817,6 +2817,6 @@ hst_image_data			SECTION hst_gfx,DATA_C
 
 ; Logo
 lg_image_data			SECTION lg_gfx,DATA
-	INCBIN "FlexiTwister:graphics/256x54x8x2-RSE-Logo.rawblit"
+	INCBIN "FlexiTwister:graphics/256x54x8x2-Group-Logo.rawblit"
 
 	END
