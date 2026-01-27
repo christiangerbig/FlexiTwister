@@ -2454,34 +2454,31 @@ control_counters_quit
 	CNOP 0,4
 mouse_handler
 	btst	#CIAB_GAMEPORT0,CIAPRA(a4) ; LMB pressed ?
-	beq.s	mh_exit_demo
-	rts
-	CNOP 0,4
-mh_exit_demo
+	bne.s	mouse_handler_quit
 	moveq	#TRUE,d0
 	move.w	#FALSE,pt_effects_handler_active(a3)
 	tst.w	hst_active(a3)
-	bne.s	mh_exit_demo_skip2
+	bne.s	mouse_handler_skip2
 	tst.w	hsl_active(a3)
-	bne.s	mh_exit_demo_skip1
+	bne.s	mouse_handler_skip1
 	move.w	d0,hsl_stop_active(a3)
 	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
 	move.w	#hsl_stop_x_angle_speed2,hsl_stop_x_angle_speed(a3)
-mh_exit_demo_skip1
+mouse_handler_skip1
 	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3) ; scroll text double speed
-	move.w	#hst_stop_text-hst_text,hst_text_table_start(a3) ; no characters
+	move.w	#hst_text_stop-hst_text,hst_text_table_start(a3) ; no characters
 	move.w	d0,quit_active(a3)	; stop intro after scroll text stop
-	bra.s	mh_exit_demo_quit
+	bra.s	mouse_handler_quit
 	CNOP 0,4
-mh_exit_demo_skip2
+mouse_handler_skip2
 	tst.w	hsl_active(a3)
-	bne.s	mh_exit_demo_skip3
+	bne.s	mouse_handler_skip3
 	move.w	d0,hsl_stop_active(a3)
 	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
 	move.w	#hsl_stop_x_angle_speed2,hsl_stop_x_angle_speed(a3)
-mh_exit_demo_skip3
+mouse_handler_skip3
 	move.w	#quit_delay,quit_delay_counter(a3)
-mh_exit_demo_quit
+mouse_handler_quit
 	rts
 
 
@@ -2778,7 +2775,7 @@ hst_restart_text
 	DC.B "CODING AND MUSIC                      >DISSIDENT<     ",ASCII_CTRL_P,"                     "
 	DC.B "GRAPHICS                      >OPTIC<       ",ASCII_CTRL_P,"             AND"
 	DC.B "                      >GRASS<       ",ASCII_CTRL_P,"           "
-hst_stop_text
+hst_text_stop
 	REPT ((hst_text_chars_number)/(hst_origin_char_x_size/hst_text_char_x_size))+1
 	DC.B " "
 	ENDR
