@@ -2465,7 +2465,7 @@ mouse_handler
 	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
 	move.w	#hsl_stop_x_angle_speed2,hsl_stop_x_angle_speed(a3)
 mouse_handler_skip1
-	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3) ; scroll text double speed
+	move.w	#hst_horiz_scroll_speed2,hst_horiz_scroll_speed(a3)
 	move.w	#hst_text_stop-hst_text,hst_text_table_start(a3) ; no characters
 	move.w	d0,quit_active(a3)	; stop intro after scroll text stop
 	bra.s	mouse_handler_quit
