@@ -192,8 +192,8 @@ pt_metrospeedbits		EQU pt_metrospeed4th
 
 ; Twisted-Bars
 tb_quick_clear_enabled		EQU FALSE
-tb_cpu_restore_cl_enabled	EQU TRUE
-tb_blitter_restore_cl_enabled	EQU FALSE
+tb_restore_cl_cpu_enabled	EQU TRUE
+tb_restore_cl_blitter_enabled	EQU FALSE
 
 ; Colors-Fader-Cross
 cfc_rgb8_prefade_enabled	EQU TRUE
@@ -1306,8 +1306,8 @@ beam_routines
 	bsr	set_first_copperlist
 	bsr	swap_second_copperlist
 	bsr	set_second_copperlist
-	bsr	swap_playfield1
-	bsr	set_playfield1
+	bsr	pf1_swap_playfields
+	bsr	pf1_set_playfield
 	bsr	hst_get_text_softscroll
 	bsr	horiz_scrolltext
 	bsr	hst_horiz_scroll
@@ -1356,11 +1356,11 @@ beam_routines
 	SET_COPPERLIST cl2
 
 
-	SWAP_PLAYFIELD pf1,3
+	SWAP_PLAYFIELD_BUFFERS pf1,3
 
 
 	CNOP 0,4
-set_playfield1
+pf1_set_playfield
 	moveq	#be_y_radius,d1
 	sub.w	hst_text_y_offset(a3),d1 ; vertical centering
 	MULUF.W pf1_plane_width*pf1_depth3,d1,d0 ; y offset
@@ -1369,14 +1369,14 @@ set_playfield1
 	ADDF.W	cl1_BPL1PTH+WORD_SIZE,a0
 	move.l	pf1_display(a3),a1
 	moveq	#pf1_depth3-1,d7
-set_playfield1_loop
+pf1_set_playfield_loop
 	move.l	(a1)+,d0
 	add.l	d1,d0			; bitplane offset
 	move.w	d0,LONGWORD_SIZE(a0)	; BPLxPTL
 	swap	d0
 	move.w	d0,(a0)			; BPLxPTH
 	addq.w	#QUADWORD_SIZE,a0
-	dbf	d7,set_playfield1_loop
+	dbf	d7,pf1_set_playfield_loop
 	rts
 
 
