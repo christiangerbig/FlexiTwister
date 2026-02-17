@@ -4,6 +4,9 @@
 ; 3.0+
 
 
+; Code optimized for O.M.A. 2.0 Assembler
+
+
 ; History/Changes
 
 ; V.1.0 beta
@@ -1079,8 +1082,8 @@ init_main
 	bsr	bf_init_color_table
 	bsr	init_sprites
 	bsr	init_CIA_timers
-	bsr	init_first_copperlist
-	bsr	init_second_copperlist
+	bsr	cl1_init_copperlist
+	bsr	cl2_init_copperlist
 	rts
 
 
@@ -1185,7 +1188,7 @@ init_CIA_timers
 
 
 	CNOP 0,4
-init_first_copperlist
+cl1_init_copperlist
 	move.l	cl1_construction2(a3),a0 
 	bsr.s	cl1_init_playfield_props
 	bsr.s	cl1_init_sprite_pointers
@@ -1254,7 +1257,7 @@ cl1_init_colors
 
 
 	CNOP 0,4
-init_second_copperlist
+cl2_init_copperlist
 	move.l	cl2_construction1(a3),a0 
 	bsr.s	cl2_init_bplcon4_chunky
 	bsr.s	cl2_init_copper_interrupt
@@ -2668,7 +2671,7 @@ vm_audio_channel4_info
 ; Twisted-Bars
 	CNOP 0,4
 tb_colorfradients
-	INCLUDE "FlexiTwister:colortables/Bars-Colorgradient.ct"
+	INCLUDE "FlexiTwister:colorpalettes/Bars-Colorgradient.ct"
 
 	CNOP 0,4
 tb_yz_coordinates
@@ -2707,7 +2710,7 @@ hst_chars_image_pointers
 ; Bar-Fader
 	CNOP 0,4
 bfi_color_table
-	INCLUDE "FlexiTwister:colortables/Striped-Bar-Colorgradient.ct"
+	INCLUDE "FlexiTwister:colorpalettes/Striped-Bar-Colorgradient.ct"
 
 	CNOP 0,4
 bfo_color_table
@@ -2732,7 +2735,7 @@ ccf_columns_mask
 ; Color-Fader-Cross / Horiz-Scrolltext
 	CNOP 0,4
 cfc_rgb8_color_table
-	INCLUDE "FlexiTwister:colortables/Font-Colorgradient.ct"
+	INCLUDE "FlexiTwister:colorpalettes/Font-Colorgradient.ct"
 
 
 	INCLUDE "sys-variables.i"
