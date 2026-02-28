@@ -367,11 +367,13 @@ tb_clear_blit_y_size		EQU cl2_display_y_size*(cl2_display_width+2)
 	ELSE
 tb_clear_blit_y_size		EQU cl2_display_y_size*(cl2_display_width+1)
 	ENDC
+tb_bplcon4_bits			EQU bplcon4_bits
 
 ; Restore-Blit
 tb_restore_blit_x_size		EQU 16
 tb_restore_blit_width		EQU tb_restore_blit_x_size/8
 tb_restore_blit_y_size		EQU cl2_display_y_size
+tb_display_y_size		EQU cl2_display_y_size
 
 ; Sine-Striped-Bar
 ssb_bar_height			EQU 80
@@ -545,7 +547,7 @@ cl1_begin			RS.B 0
 
 cl1_COPJMP2			RS.L 1
 
-copperlist1_size		RS.B 0
+cl1_copperlist_size		RS.B 0
 
 
 	RSRESET
@@ -616,16 +618,16 @@ cl2_INTREQ			RS.L 1
 
 cl2_end				RS.L 1
 
-copperlist2_size		RS.B 0
+cl2_copperlist_size		RS.B 0
 
 
 cl1_size1			EQU 0
-cl1_size2			EQU copperlist1_size
-cl1_size3			EQU copperlist1_size
+cl1_size2			EQU cl1_copperlist_size
+cl1_size3			EQU cl1_copperlist_size
 
-cl2_size1			EQU copperlist2_size
-cl2_size2			EQU copperlist2_size
-cl2_size3			EQU copperlist2_size
+cl2_size1			EQU cl2_copperlist_size
+cl2_size2			EQU cl2_copperlist_size
+cl2_size3			EQU cl2_copperlist_size
 
 
 ; Sprite0 additional structure
@@ -1193,11 +1195,11 @@ cl1_init_copperlist
 	bsr.s	cl1_init_playfield_props
 	bsr.s	cl1_init_sprite_pointers
 	bsr	cl1_init_colors
-	bsr	cl1_init_bitplane_pointers
+	bsr	cl1_init_plane_pointers
 	COP_MOVEQ 0,COPJMP2
 	bsr	cl1_set_sprite_pointers
-	bsr	cl1_set_bitplane_pointers
-	bsr	copy_first_copperlist
+	bsr	cl1_set_plane_pointers
+	bsr	cl1_copy_copperlist
 	rts
 
 
@@ -1262,7 +1264,7 @@ cl2_init_copperlist
 	bsr.s	cl2_init_bplcon4_chunky
 	bsr.s	cl2_init_copper_interrupt
 	COP_LISTEND
-	bsr	copy_second_copperlist
+	bsr	cl2_copy_copperlist
 	rts
 
 
@@ -1305,11 +1307,11 @@ cfc_rgb8_init_start_colors
 	CNOP 0,4
 beam_routines
 	bsr	wait_copint
-	bsr	swap_first_copperlist
-	bsr	set_first_copperlist
-	bsr	swap_second_copperlist
-	bsr	set_second_copperlist
-	bsr	pf1_swap_playfields
+	bsr	cl1_swap_copperlist
+	bsr	cl1_set_copperlist
+	bsr	cl2_swap_copperlist
+	bsr	cl2_set_copperlist
+	bsr	pf1_swap_playfield
 	bsr	pf1_set_playfield
 	bsr	hst_get_text_softscroll
 	bsr	horiz_scrolltext
@@ -1317,7 +1319,7 @@ beam_routines
 	bsr	horiz_scroll_logo_start
 	bsr	horiz_scroll_logo_stop
 	bsr	horiz_scroll_logo
-	bsr	tb_clear_second_copperlist
+	bsr	tb_cl2_clear_copperlist
 	bsr	bounce_effect
 	bsr	cl2_update_bpl1dat
 	bsr	bf_convert_colors
@@ -1330,7 +1332,7 @@ beam_routines
 	bsr	make_striped_bar
 	bsr	tb_set_foreground_bars
 	IFNE tb_quick_clear_enabled
-		bsr	restore_second_copperlist
+		bsr	tb_cl2_restore_copperlist
 	ENDC
 	bsr	bar_fader_in
 	bsr	bar_fader_out
@@ -1392,6 +1394,7 @@ horiz_scroll_logo_start
 	cmp.w	#sine_table_length2/2,d2 ; 180° ?
 	ble.s	horiz_scroll_logo_start_skip
 	move.w	#FALSE,hsl_start_active(a3)
+horiz_scroll_logo_start_quit
 	rts
 	CNOP 0,4
 horiz_scroll_logo_start_skip
@@ -1403,8 +1406,7 @@ horiz_scroll_logo_start_skip
 	move.w	d0,hsl_variable_x_radius(a3)
 	addq.w	#hsl_start_x_angle_speed,d2
 	move.w	d2,hsl_start_x_angle(a3) 
-horiz_scroll_logo_start_quit
-	rts
+	bra.s	horiz_scroll_logo_start_quit
 
 
 	CNOP 0,4
@@ -1505,9 +1507,9 @@ cl2_update_bpl1dat
 	MOVEF.W (visible_lines_number/32)-1,d7
 cl2_update_bpl1dat_loop
 	REPT 32
-	move.w	(a0),(a1)	; copy 16 pixel
-	add.l	d1,a0		; next line in playfield
-	add.l	d2,a1		; next line
+	move.w	(a0),(a1)		; copy 16 pixel
+	add.l	d1,a0			; next line in playfield
+	add.l	d2,a1			; next line
 	ENDR
 	dbf	d7,cl2_update_bpl1dat_loop
 	rts
@@ -1863,7 +1865,7 @@ horiz_scrolltext_init
 	WAITBLIT
 	move.l	#(BC0F_SRCA|BC0F_DEST|ANBNC|ANBC|ABNC|ABC)<<16,BLTCON0-DMACONR(a6) ; minterm D = A
 	moveq	#-1,d0
-	move.l	d0,BLTAFWM-DMACONR(a6)
+	move.l	d0,BLTAFWM-DMACONR(a6)	; no mask
 	move.l	#((hst_image_plane_width-hst_text_char_width)<<16)|(pf1_plane_width-hst_text_char_width),BLTAMOD-DMACONR(a6) ; A&D moduli
 	rts
 
@@ -1881,13 +1883,14 @@ hst_check_control_codes
 	beq.s	hst_pause_scrolltext
 	cmp.b	#ASCII_CTRL_S,d0
 	beq.s	hst_stop_scrolltext
+hst_check_control_codes_quit
 	rts
 	CNOP 0,4
 hst_pause_scrolltext
 	clr.w	hst_pause_horiz_scroll_active(a3)
 	move.w	#hst_text_delay,hst_text_delay_counter(a3) ; start counter
 	moveq	#RETURN_OK,d0
-	rts
+	bra.s	hst_check_control_codes_quit
 	CNOP 0,4
 hst_stop_scrolltext
 	move.w	#FALSE,hst_active(a3)	; stop text
@@ -1918,7 +1921,7 @@ hst_stop_scrolltext_skip3
 	move.w	d0,bf_convert_colors_active(a3)
 hst_stop_scrolltext_quit
 	moveq	#RETURN_OK,d0
-	rts
+	bra.s	hst_check_control_codes_quit
 
 
 	CNOP 0,4
@@ -1934,6 +1937,8 @@ hst_horiz_scroll
 	swap	d0
 	WAITBLIT
 	move.l	d0,BLTCON0-DMACONR(a6)
+	moveq	#-1,d0
+	move.l	d0,BLTAFWM-DMACONR(a6)	; no mask
 	move.l	a0,BLTAPT-DMACONR(a6)
 	addq.w	#WORD_SIZE,a0		; skip 16 pixel
 	move.l	a0,BLTDPT-DMACONR(a6)
@@ -2547,56 +2552,59 @@ pt_start_bar_fader_in
 	move.w	d0,bfi_active(a3)
 	move.w	#bf_colors_number*3,bf_colors_counter(a3)
 	move.w	d0,bf_convert_colors_active(a3)
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_start_scrolltext
 	clr.w	hst_active(a3)
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_start_scroll_logo_bottom_in
 	clr.w	slbi_active(a3)
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_start_chunky_columns_fader_in
 	clr.w	ccfi_active(a3)
 	move.w	#1,ccfi_delay_counter(a3) ; activate delay counter
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_toggle_stripes_y_movement
 	neg.w	sp_stripes_y_angle_speed(a3) ; reverse direction
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_start_horiz_logo_scroll
 	moveq	#TRUE,d0
 	move.w	d0,hsl_active(a3)
 	move.w	d0,hsl_start_active(a3)
 	move.w	#sine_table_length2/4,hsl_start_x_angle(a3) ; 90°
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_stop_horiz_logo_scroll
 	clr.w	hsl_stop_active(a3)
 	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
 	move.w	#hsl_stop_x_angle_speed1,hsl_stop_x_angle_speed(a3)
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_restart_scrolltext
 	clr.w	hst_active(a3)
 	move.w	#hst_restart_text-hst_text,hst_text_table_start(a3) ; skip countdown text
-	rts
+	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_select_channel
 	moveq	#NIBBLE_MASK_LOW,d0
 	and.b	n_cmdlo(a2),d0
 	move.w	d0,vm_audio_channel(a3)
-	rts
+	bra.s	pt_effects_handler_quit
+
 
 	CNOP 0,4
 ciab_tb_interrupt_server
 	PT_TIMER_INTERRUPT_SERVER
 
+
 	CNOP 0,4
 exter_interrupt_server
 	rts
+
 
 	CNOP 0,4
 nmi_interrupt_server
