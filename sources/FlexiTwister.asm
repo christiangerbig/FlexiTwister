@@ -1535,9 +1535,10 @@ get_channels_amplitudes
 
 ; Input
 ; d2.w	Scaling
-; a0.l	Temporary audio channel structure
-; a1.l	Channel info structure
+; a0.l	Pointer structure temporary audio channel
+; a1.l	Pointer structure channel info
 ; Result
+; no return value
 	CNOP 0,4
 get_channel_amplitude
 	tst.b	n_notetrigger(a0)	; new note played ?
@@ -2127,6 +2128,7 @@ scroll_logo_bottom_out_quit
 ; Input
 ; d5.w	VSTART
 ; Result
+; no return value
 	CNOP 0,4
 slb_vert_scroll_logo
 	MOVEF.W lg_logo_x_position*SHIRES_PIXEL_FACTOR,d4
