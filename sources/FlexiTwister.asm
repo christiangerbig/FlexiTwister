@@ -57,7 +57,7 @@
 
 ; V.1.8 beta
 ; - fx commands 861->870, 870->880
-; - new Fx command 89n to select the audio channel (n=0..3) for the twister
+; - new Fx command 89n to select the audio channel (n = 0..3) for the twister
 ; - scroll text now starts earlier together with the music
 ; - fx commands in module changed
 ; - code optimized
@@ -276,8 +276,8 @@ ciab_ta_time			EQU 14187 ; = 0.709379 MHz * [20000 탎 = 50 Hz duration for one f
 	ELSE
 ciab_ta_time			EQU 0
 	ENDC
-ciab_tb_time			EQU 362 ; = 0.709379 MHz * [511.43 탎 = Lowest note period C1 with Tuning=-8 * 2 / PAL clock constant = 907*2/3546895 ticks per second]
-					; = 0.715909 MHz * [506.76 탎 = Lowest note period C1 with Tuning=-8 * 2 / NTSC clock constant = 907*2/3579545 ticks per second]
+ciab_tb_time			EQU 362 ; = 0.709379 MHz * [511.43 탎 = Lowest note period C1 with Tuning = -8 * 2 / PAL clock constant = 907*2/3546895 ticks per second]
+					; = 0.715909 MHz * [506.76 탎 = Lowest note period C1 with Tuning = -8 * 2 / NTSC clock constant = 907*2/3579545 ticks per second]
 ciaa_ta_continuous_enabled	EQU FALSE
 ciaa_tb_continuous_enabled	EQU FALSE
 	IFEQ pt_ciatiming_enabled
@@ -888,7 +888,7 @@ be_y_angle			RS.W 1
 
 ; Horiz-Scroll-Logo
 hsl_active			RS.W 1
-hsl_variable_x_radius		RS.W 1
+hslx_radius		RS.W 1
 hsl_x_angle			RS.W 1
 
 hsl_start_active		RS.W 1
@@ -1000,7 +1000,7 @@ init_main_variables
 
 ; Horiz-Scroll-Logo
 	move.w	d1,hsl_active(a3)
-	move.w	d0,hsl_variable_x_radius(a3)
+	move.w	d0,hslx_radius(a3)
 	move.w	d0,hsl_x_angle(a3) ;0�
 
 	move.w	d1,hsl_start_active(a3)
@@ -1400,10 +1400,10 @@ horiz_scroll_logo_start_quit
 horiz_scroll_logo_start_skip
 	lea	sine_table2(pc),a0
 	move.l	(a0,d2.w*4),d0		; cos(w)
-	MULUF.L hsl_start_x_radius*SHIRES_PIXEL_FACTOR*2*2,d0,d1 ; xr'=xr*cos(w)/2^16
+	MULUF.L hsl_start_x_radius*SHIRES_PIXEL_FACTOR*2*2,d0,d1 ; xr' = xr*cos(w)/2^16
 	swap	d0
 	add.w	#hsl_start_x_center*SHIRES_PIXEL_FACTOR*2,d0
-	move.w	d0,hsl_variable_x_radius(a3)
+	move.w	d0,hslx_radius(a3)
 	addq.w	#hsl_start_x_angle_speed,d2
 	move.w	d2,hsl_start_x_angle(a3) 
 	bra.s	horiz_scroll_logo_start_quit
@@ -1424,10 +1424,10 @@ horiz_scroll_logo_stop
 horiz_scroll_logo_stop_skip
 	lea	sine_table2(pc),a0
 	move.l	(a0,d2.w*4),d0		; cos(w)
-	MULUF.L hsl_stop_x_radius*SHIRES_PIXEL_FACTOR*2*2,d0,d1 ; x'=xr*cos(w)/2^16
+	MULUF.L hsl_stop_x_radius*SHIRES_PIXEL_FACTOR*2*2,d0,d1 ; x' = xr*cos(w)/2^16
 	swap	d0
 	add.w	#hsl_stop_x_center*SHIRES_PIXEL_FACTOR*2,d0
-	move.w	d0,hsl_variable_x_radius(a3)
+	move.w	d0,hslx_radius(a3)
 	sub.w	hsl_stop_x_angle_speed(a3),d2
 	move.w	d2,hsl_stop_x_angle(a3) 
 horiz_scroll_logo_stop_quit
@@ -1441,7 +1441,7 @@ horiz_scroll_logo
 	move.w	hsl_x_angle(a3),d1
 	lea	sine_table2(pc),a0
 	move.w	WORD_SIZE(a0,d1.w*4),d3	; sin(w)
-	muls.w	hsl_variable_x_radius(a3),d3 ; x'=xrsin(w)/2^16
+	muls.w	hslx_radius(a3),d3 ; x' = xrsin(w)/2^16
 	swap	d3
 	add.w	#hsl_x_center*SHIRES_PIXEL_FACTOR,d3
 	addq.w	#hsl_x_angle_speed,d1
@@ -1483,7 +1483,7 @@ bounce_effect
 	move.w	d0,be_y_angle(a3)
 	lea	sine_table2(pc),a0
 	move.l	(a0,d1.w*4),d0		; sin(w)
-	MULUF.L be_y_radius*2,d0,d1	; y'=(yr*sin(w))/2^15
+	MULUF.L be_y_radius*2,d0,d1	; y' = (yr*sin(w))/2^15
 	swap	d0
 	move.w	d0,ssb_y_offset(a3)
 	add.w	#be_y_radius,d0		; y' + y radius
@@ -1576,7 +1576,7 @@ tb_get_yz_coordinates
 	moveq	#(cl2_display_width-1)-1,d7 ; number of columns
 tb_get_yz_coordinates_loop1
 	move.l	(a0,d5.w*4),d0		; sin(w)
-	MULUF.L tb_y_angle_step_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
+	MULUF.L tb_y_angle_step_radius*2,d0,d1 ; y' = (yr*sin(w))/2^15
 	swap	d0
 	add.w	a4,d0			; y' + y step center
 	move.w	d4,d2			; y angle
@@ -1588,7 +1588,7 @@ tb_get_yz_coordinates_loop2
 	add.w	d2,d1			; y angle - 90�
 	ext.w	d1
 	move.w	d1,(a1)+		; z vector
-	MULUF.L tb_y_radius*2,d0,d1	; y'=(yr*sin(w))/2^15
+	MULUF.L tb_y_radius*2,d0,d1	; y' = (yr*sin(w))/2^15
 	swap	d0
 	add.w	a2,d0			; y' + y center
 	MULUF.W cl2_extension1_size/LONGWORD_SIZE,d0,d1 ; y offset in cl
@@ -1616,7 +1616,7 @@ sp_get_stripes_y_coordinates
 	MOVEF.W	(sp_stripes_number*sp_stripe_height)-1,d7 ; number of lines
 sp_get_stripes_y_coordinates_loop
 	move.l	(a0,d2.w*4),d0		; cos(w)
-	MULUF.L SP_stripes_y_radius*2,d0,d1 ; y'=(yr*cos(w))/2^15
+	MULUF.L SP_stripes_y_radius*2,d0,d1 ; y' = (yr*cos(w))/2^15
 	swap	d0
 	add.w	d4,d0			; y' + y center
 	move.w	d0,(a1)+		; y position
@@ -1666,7 +1666,7 @@ tb_set_background_bars_skip4
 	CNOP 0,4
 make_striped_bar
 	move.w	ssb_y_offset(a3),d0
-	add.w	#be_y_center,d0		; y' + y y center
+	add.w	#be_y_center,d0		; y' + y center
 	MULUF.W cl2_extension1_size/4,d0,d1 ; y offset in cl
 	move.l	extra_memory(a3),a0
 	add.l	#em_bplam_table2,a0
@@ -1969,7 +1969,7 @@ bar_fader_in_skip
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
 	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L bfi_fader_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
+	MULUF.L bfi_fader_radius*2,d0,d1 ; y' = (yr*sin(w))/2^15
 	swap	d0
 	ADDF.W	bfi_fader_center,d0
 	lea	bf_color_cache+(bf_color_table_offset*LONGWORD_SIZE)(pc),a0 ; color values buffer
@@ -2006,7 +2006,7 @@ bar_fader_out_skip
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
 	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L bfo_fader_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
+	MULUF.L bfo_fader_radius*2,d0,d1 ; y' = (yr*sin(w))/2^15
 	swap	d0
 	ADDF.W	bfo_fader_center,d0
 	lea	bf_color_cache+(bf_color_table_offset*LONGWORD_SIZE)(pc),a0 ; color values buffer
@@ -2084,7 +2084,7 @@ scroll_logo_bottom_in
 scroll_logo_bottom_in_skip
 	lea	sine_table1,a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L slb_y_radius*2,d0,d1	; y'=yr*cos(w)/2^16
+	MULUF.L slb_y_radius*2,d0,d1	; y' = yr*cos(w)/2^16
 	swap	d0
 	add.w	#slb_y_center,d0
 	MOVEF.W lg_logo_y_position,d5
@@ -2111,7 +2111,7 @@ scroll_logo_bottom_out
 scroll_logo_bottom_out_skip
 	lea	sine_table1,a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L slb_y_radius*2,d0,d1	; y'=yr*cos(w)/2^16
+	MULUF.L slb_y_radius*2,d0,d1	; y' = yr*cos(w)/2^16
 	swap	d0
 	add.w	#slb_y_center,d0
 	MOVEF.W lg_logo_y_position,d5
@@ -2309,7 +2309,7 @@ rgb8_colors_fader_cross_skip
 	MOVEF.W cfc_rgb8_colors_number*3,d6 ; RGB counter
 	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L cfc_rgb8_fader_radius*2,d0,d1 ; y'=(yr*sin(w))/2^15
+	MULUF.L cfc_rgb8_fader_radius*2,d0,d1 ; y' = (yr*sin(w))/2^15
 	swap	d0
 	ADDF.W	cfc_rgb8_fader_center,d0
 	lea	pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; color values buffer
