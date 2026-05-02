@@ -2511,8 +2511,9 @@ vertb_interrupt_server
 		rts
 
 		PT_FADE_OUT_VOLUME stop_fx_active
-
-		CNOP 0,4
+	ELSE
+		bsr.s	pt_PlayMusic
+		rts
 	ENDC
 
 	IFD PROTRACKER_VERSION_2 
