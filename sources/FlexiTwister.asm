@@ -881,7 +881,7 @@ hst_char_toggle_image		RS.W 1
 hst_text_y_offset		RS.W 1
 hst_horiz_scroll_speed		RS.W 1
 hst_pause_horiz_scroll_active	RS.W 1
-hst_text_delay_counter		RS.W 1
+hst_text_counter		RS.W 1
 
 ; Bounce-Effect
 be_y_angle			RS.W 1
@@ -901,7 +901,7 @@ hsl_stop_x_angle_speed		RS.W 1
 ; Colors-Fader-Cross
 cfc_rgb8_active			RS.W 1
 cfc_rgb8_fader_angle		RS.W 1
-cfc_rgb8_fader_delay_counter	RS.W 1
+cfc_rgb8_fader_counter	RS.W 1
 cfc_rgb8_color_table_start	RS.W 1
 cfc_rgb8_colors_counter		RS.W 1
 cfc_rgb8_copy_colors_active	RS.W 1
@@ -930,19 +930,19 @@ slbo_y_angle			RS.W 1
 ccfi_active			RS.W 1
 ccfi_current_mode		RS.W 1
 ccfi_start			RS.W 1
-ccfi_delay_counter		RS.W 1
+ccfi_counter		RS.W 1
 
 ; Chunky-Columns-Fader-Out
 ccfo_active			RS.W 1
 ccfo_current_mode		RS.W 1
 ccfo_start			RS.W 1
-ccfo_delay_counter		RS.W 1
+ccfo_counter		RS.W 1
 
 ; Main
 logo_active			RS.W 1
 stop_fx_active			RS.W 1
 quit_active			RS.W 1
-quit_delay_counter		RS.W 1
+quit_counter		RS.W 1
 
 variables_size			RS.B 0
 
@@ -993,7 +993,7 @@ init_main_variables
 	moveq	#hst_horiz_scroll_speed1,d2
 	move.w	d2,hst_horiz_scroll_speed(a3)
 	move.w	d1,hst_pause_horiz_scroll_active(a3)
-	move.w	d1,hst_text_delay_counter(a3) ; delay counter inactive
+	move.w	d1,hst_text_counter(a3) ; delay counter inactive
 
 ; Bounce-effect
 	move.w	d0,be_y_angle(a3)	; 0°
@@ -1021,7 +1021,7 @@ init_main_variables
 		move.w	d1,cfc_rgb8_copy_colors_active(a3)
 	ENDC
 	move.w	#sine_table_length1/4,cfc_rgb8_fader_angle(a3) ; 90°
-	move.w	d1,cfc_rgb8_fader_delay_counter(a3)
+	move.w	d1,cfc_rgb8_fader_counter(a3)
 	move.w	d0,cfc_rgb8_color_table_start(a3)
 
 ; Bar-Fader
@@ -1049,19 +1049,19 @@ init_main_variables
 	move.w	d1,ccfi_active(a3)
 	move.w	#ccfi_mode1,ccfi_current_mode(a3)
 	move.w	d0,ccfi_start(a3)
-	move.w	d0,ccfi_delay_counter(a3)
+	move.w	d0,ccfi_counter(a3)
 
 ; Chunky-Columns-Fader-Out
 	move.w	d1,ccfo_active(a3)
 	move.w	#ccfo_mode1,ccfo_current_mode(a3)
 	move.w	d0,ccfo_start(a3)
-	move.w	d0,ccfo_delay_counter(a3)
+	move.w	d0,ccfo_counter(a3)
 
 ; Main
 	move.w	d1,logo_active(a3)
 	move.w	d1,stop_fx_active(a3)
 	move.w	d1,quit_active(a3)
-	move.w	d1,quit_delay_counter(a3)
+	move.w	d1,quit_counter(a3)
 	rts
 
 
@@ -1889,7 +1889,7 @@ hst_check_control_codes_quit
 	CNOP 0,4
 hst_pause_scrolltext
 	clr.w	hst_pause_horiz_scroll_active(a3)
-	move.w	#hst_text_delay,hst_text_delay_counter(a3) ; start counter
+	move.w	#hst_text_delay,hst_text_counter(a3) ; start counter
 	moveq	#RETURN_OK,d0
 	bra.s	hst_check_control_codes_quit
 	CNOP 0,4
@@ -1911,7 +1911,7 @@ hst_stop_scrolltext_skip1
 	move.w	d1,ccfi_active(a3)	; force fader stop
 hst_stop_scrolltext_skip2
 	move.w	d0,ccfo_active(a3)
-	move.w	#1,ccfo_delay_counter(a3) ; activate counter
+	move.w	#1,ccfo_counter(a3) ; activate counter
 ; Bar-Fader
 	tst.w	bfi_active(a3)		; fader still running ?
 	bne.s	hst_stop_scrolltext_skip3
@@ -2158,9 +2158,9 @@ slb_vert_scroll_logo_loop
 chunky_columns_fader_in
 	tst.w	ccfi_active(a3)
 	bne.s	chunky_columns_fader_in_quit
-	subq.w	#ccfi_delay_speed,ccfi_delay_counter(a3)
+	subq.w	#ccfi_delay_speed,ccfi_counter(a3)
 	bne.s	chunky_columns_fader_in_quit
-	move.w	#ccfi_delay,ccfi_delay_counter(a3)
+	move.w	#ccfi_delay,ccfi_counter(a3)
 	move.w	ccfi_start(a3),d1
 	moveq	#(cl2_display_width-1)-1,d2
 	lea	ccf_columns_mask(pc),a0
@@ -2228,9 +2228,9 @@ ccfi_fader_mode_skip
 chunky_columns_fader_out
 	tst.w	ccfo_active(a3)
 	bne.s	chunky_columns_fader_out_quit
-	subq.w	#ccfo_delay_speed,ccfo_delay_counter(a3)
+	subq.w	#ccfo_delay_speed,ccfo_counter(a3)
 	bne.s	chunky_columns_fader_out_quit
-	move.w	#ccfo_delay,ccfo_delay_counter(a3)
+	move.w	#ccfo_delay,ccfo_counter(a3)
 	move.w	ccfo_start(a3),d1
 	moveq	#(cl2_display_width-1)-1,d2
 	lea	ccf_columns_mask(pc),a0
@@ -2397,7 +2397,7 @@ cfc_rgb8_copy_color_table_skip
 	tst.w	cfc_rgb8_colors_counter(a3) ; cross-fading finished ?
 	bne.s	cfc_rgb8_copy_color_table_quit
 	move.w	#FALSE,cfc_rgb8_copy_colors_active(a3)
-	move.w	#cfc_rgb8_fader_delay,cfc_rgb8_fader_delay_counter(a3)
+	move.w	#cfc_rgb8_fader_delay,cfc_rgb8_fader_counter(a3)
 	move.w	cfc_rgb8_color_table_start(a3),d0
 	addq.w	#1,d0			; next color table
 	and.w	#cfc_rgb8_color_tables_number-1,d0 ; remove overflow
@@ -2411,7 +2411,7 @@ cfc_rgb8_copy_color_table_quit
 
 	CNOP 0,4
 control_counters
-	move.w	cfc_rgb8_fader_delay_counter(a3),d0
+	move.w	cfc_rgb8_fader_counter(a3),d0
 	bmi.s	control_counters_skip2
 	subq.w	#1,d0
 	bpl.s	control_counters_skip1
@@ -2421,18 +2421,18 @@ control_counters
 	move.w	d1,cfc_rgb8_active(a3)
 	move.w	#sine_table_length1/4,cfc_rgb8_fader_angle(a3) ; 90°
 control_counters_skip1
-	move.w	d0,cfc_rgb8_fader_delay_counter(a3) 
+	move.w	d0,cfc_rgb8_fader_counter(a3) 
 control_counters_skip2
-	move.w	hst_text_delay_counter(a3),d0
+	move.w	hst_text_counter(a3),d0
 	bmi.s	control_counters_skip4
 	subq.w	#1,d0
 	bpl.s	control_counters_skip3
 	move.w	#hst_horiz_scroll_speed1,hst_horiz_scroll_speed(a3)
 	moveq	#FALSE,d0		; stop counter
 control_counters_skip3
-	move.w	d0,hst_text_delay_counter(a3) 
+	move.w	d0,hst_text_counter(a3) 
 control_counters_skip4
-	move.w	quit_delay_counter(a3),d0
+	move.w	quit_counter(a3),d0
 	bmi.s	control_counters_quit
 	subq.w	#1,d0
 	bpl.s	control_counters_skip7
@@ -2448,7 +2448,7 @@ control_counters_skip5
 	move.w	#FALSE,ccfi_active(a3)
 control_counters_skip6
 	clr.w	ccfo_active(a3)
-	move.w	#1,ccfo_delay_counter(a3) ; activate counter
+	move.w	#1,ccfo_counter(a3) ; activate counter
 ; Bar-Fader
 	tst.w	bfi_active(a3)
 	bne.s	control_counters_skip7
@@ -2458,7 +2458,7 @@ control_counters_skip7
 	move.w	d0,bfo_active(a3)
 	move.w	d0,bf_convert_colors_active(a3)
 	move.w	#bf_colors_number*3,bf_colors_counter(a3)
-	move.w	d0,quit_delay_counter(a3)
+	move.w	d0,quit_counter(a3)
 control_counters_quit
 	rts
 
@@ -2489,7 +2489,7 @@ mouse_handler_skip2
 	move.w	#sine_table_length2/2,hsl_stop_x_angle(a3) ; 180°
 	move.w	#hsl_stop_x_angle_speed2,hsl_stop_x_angle_speed(a3)
 mouse_handler_skip3
-	move.w	#quit_delay,quit_delay_counter(a3)
+	move.w	#quit_delay,quit_counter(a3)
 mouse_handler_quit
 	rts
 
@@ -2567,7 +2567,7 @@ pt_start_scroll_logo_bottom_in
 	CNOP 0,4
 pt_start_chunky_columns_fader_in
 	clr.w	ccfi_active(a3)
-	move.w	#1,ccfi_delay_counter(a3) ; activate delay counter
+	move.w	#1,ccfi_counter(a3) ; activate delay counter
 	bra.s	pt_effects_handler_quit
 	CNOP 0,4
 pt_toggle_stripes_y_movement
