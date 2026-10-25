@@ -1072,6 +1072,7 @@ init_main
 	bsr	pt_InitAudTempStrucs
 	bsr	pt_ExamineSongStruc
 	bsr	pt_InitFtuPeriodTableStarts
+	bsr	init_CIA_timers
 	bsr	vm_init_audio_channel_info
 	bsr	tb_init_color_table
 	bsr	ssb_init_color_table
@@ -1083,7 +1084,6 @@ init_main
 	bsr	hst_init_chars_images
 	bsr	bf_init_color_table
 	bsr	init_sprites
-	bsr	init_CIA_timers
 	bsr	cl1_init_copperlist
 	bsr	cl2_init_copperlist
 	rts
@@ -1099,6 +1099,14 @@ init_main
 	PT_EXAMINE_SONG_STRUCTURE
 
 	PT_INIT_FINETUNE_TABLE_STARTS
+
+
+	CNOP 0,4
+init_CIA_timers
+
+; PT-Replay
+	PT_INIT_TIMERS
+	rts
 
 
 ; Volume-Meter
@@ -1179,14 +1187,6 @@ init_sprites
 	INIT_SPRITE_POINTERS_TABLE
 
 	INIT_ATTACHED_SPRITES_CLUSTER lg,spr_pointers_display,,,spr_x_size2,lg_image_y_size,NOHEADER
-
-
-	CNOP 0,4
-init_CIA_timers
-
-; PT-Replay
-	PT_INIT_TIMERS
-	rts
 
 
 	CNOP 0,4
