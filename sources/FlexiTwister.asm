@@ -1368,7 +1368,7 @@ beam_routines
 pf1_set_playfield
 	moveq	#be_y_radius,d1
 	sub.w	hst_text_y_offset(a3),d1 ; vertical centering
-	MULUF.W pf1_plane_width*pf1_depth3,d1,d0 ; y offset
+	MULUF.W pf1_plane_width*pf1_depth3,d1 ; y offset
 	ADDF.W	pf1_plane_x_offset/8,d1
 	move.l	cl1_display(a3),a0
 	ADDF.W	cl1_BPL1PTH+WORD_SIZE,a0
@@ -1495,7 +1495,7 @@ bounce_effect
 cl2_update_bpl1dat
 	moveq	#be_y_radius,d0
 	sub.w	hst_text_y_offset(a3),d0 ; vertical centering
-	MULUF.W pf1_plane_width*pf1_depth3,d0,d1 ; y offset
+	MULUF.W pf1_plane_width*pf1_depth3,d0 ; y offset
 	addq.w	#pf1_bpl1dat_x_offset/8,d0 ; x offset
 	moveq	#pf1_plane_width*pf1_depth3,d1
 	MOVEF.L cl2_extension1_size,d2
@@ -1560,7 +1560,7 @@ get_channel_amplitude_quit
 tb_get_yz_coordinates
 	move.l	a4,-(a7)
 	move.w	vm_audio_channel(a3),d1
-	MULUF.W audio_channel_info_size/WORD_SIZE,d1,d0
+	MULUF.W audio_channel_info_size/WORD_SIZE,d1
 	moveq	#tb_y_distance,d3
 	move.w	tb_y_angle(a3),d4
 	move.w	d4,d0		
@@ -1970,7 +1970,7 @@ bar_fader_in_skip
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
 	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L bfi_fader_radius*2,d0,d1 ; y' = (yr*sin(w))/2^15
+	MULUF.L bfi_fader_radius*2,d0	; y' = (yr*sin(w))/2^15
 	swap	d0
 	ADDF.W	bfi_fader_center,d0
 	lea	bf_color_cache+(bf_color_table_offset*LONGWORD_SIZE)(pc),a0 ; color values buffer
@@ -2007,7 +2007,7 @@ bar_fader_out_skip
 	MOVEF.W bf_colors_number*3,d6	; RGB counter
 	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L bfo_fader_radius*2,d0,d1 ; y' = (yr*sin(w))/2^15
+	MULUF.L bfo_fader_radius*2,d0	; y' = (yr*sin(w))/2^15
 	swap	d0
 	ADDF.W	bfo_fader_center,d0
 	lea	bf_color_cache+(bf_color_table_offset*LONGWORD_SIZE)(pc),a0 ; color values buffer
@@ -2085,7 +2085,7 @@ scroll_logo_bottom_in
 scroll_logo_bottom_in_skip
 	lea	sine_table1,a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L slb_y_radius*2,d0,d1	; y' = yr*cos(w)/2^16
+	MULUF.L slb_y_radius*2,d0	; y' = yr*cos(w)/2^16
 	swap	d0
 	add.w	#slb_y_center,d0
 	MOVEF.W lg_logo_y_position,d5
@@ -2112,7 +2112,7 @@ scroll_logo_bottom_out
 scroll_logo_bottom_out_skip
 	lea	sine_table1,a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L slb_y_radius*2,d0,d1	; y' = yr*cos(w)/2^16
+	MULUF.L slb_y_radius*2,d0	; y' = yr*cos(w)/2^16
 	swap	d0
 	add.w	#slb_y_center,d0
 	MOVEF.W lg_logo_y_position,d5
@@ -2311,13 +2311,13 @@ rgb8_colors_fader_cross_skip
 	MOVEF.W cfc_rgb8_colors_number*3,d6 ; RGB counter
 	lea	sine_table1(pc),a0
 	move.l	(a0,d2.w*4),d0		; sin(w)
-	MULUF.L cfc_rgb8_fader_radius*2,d0,d1 ; y' = (yr*sin(w))/2^15
+	MULUF.L cfc_rgb8_fader_radius*2,d0 ; y' = (yr*sin(w))/2^15
 	swap	d0
 	ADDF.W	cfc_rgb8_fader_center,d0
 	lea	pf1_rgb8_color_table+(1+(((color_values_number1*segments_number1)+hst_color_gradient_y_pos)*2))*LONGWORD_SIZE(pc),a0 ; color values buffer
 	lea	cfc_rgb8_color_table(pc),a1 ; destination color values
 	move.w	cfc_rgb8_color_table_start(a3),d1
-	MULUF.W 8,d1			; * 64 = offset in color table
+	MULUF.W 8,d1			; offset in color table
 	lea	(a1,d1.w*8),a1
 	move.w	d0,a5			; increment/decrement blue
 	swap	d0
